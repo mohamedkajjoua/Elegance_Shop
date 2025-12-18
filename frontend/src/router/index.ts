@@ -4,8 +4,21 @@ const routes = [
   {
     path: "/home",
     name: "home",
-    component: () => import("@/page/Home.vue"),
+    component: () => import("@/page/HomeView.vue"),
     meta: { title: "Home" },
+  },
+  // AUTH
+  {
+    path: "/auth",
+    component: () => import("@/layouts/AuthLayout.vue"),
+    children: [
+      { path: "login", name: "login", component: () => import("@/page/auth/LoginView.vue") },
+      {
+        path: "register",
+        name: "register",
+        component: () => import("@/page/auth/RegisterView.vue"),
+      },
+    ],
   },
 ];
 
