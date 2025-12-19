@@ -2,8 +2,40 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useCartStore = defineStore('cart', () => {
-    // State
-    const items = ref(JSON.parse(localStorage.getItem('cart')) || [])
+    // Sample cart data
+    const sampleCartItems = [
+        {
+            id: 1,
+            name: 'Oversize Sweatshirt Premium',
+            price: 89.99,
+            image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=200&h=200&fit=crop',
+            size: 'L',
+            color: 'Black',
+            quantity: 2
+        },
+        {
+            id: 2,
+            name: 'Vintage Hoodie Classic',
+            price: 75.50,
+            image: 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=200&h=200&fit=crop',
+            size: 'M',
+            color: 'Grey',
+            quantity: 1
+        },
+        {
+            id: 3,
+            name: 'Streetwear Crewneck',
+            price: 65.00,
+            image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=200&h=200&fit=crop',
+            size: 'XL',
+            color: 'Navy',
+            quantity: 1
+        }
+    ]
+
+    // State - load from localStorage or use sample data
+    const storedCart = JSON.parse(localStorage.getItem('cart'))
+    const items = ref(storedCart && storedCart.length > 0 ? storedCart : sampleCartItems)
 
     // Getters
     const totalItems = computed(() => {

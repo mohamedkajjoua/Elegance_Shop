@@ -9,7 +9,6 @@ const selectedTypes = ref(['Oversize'])
 const selectedColors = ref(['Multicolour'])
 const selectedSize = ref('XXL')
 const priceRange = ref({ min: 0, max: 500 })
-const priceSlider = ref(250)
 
 function toggleType(typeName) {
   const index = selectedTypes.value.indexOf(typeName)
@@ -54,7 +53,7 @@ function resetFilters() {
 </script>
 
 <template>
-  <aside class="sidebar w-[250px] shrink-0 sticky top-5">
+  <aside class="sidebar w-full lg:w-[250px] shrink-0 lg:sticky lg:top-5 bg-card-bg lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none">
     <!-- Category -->
     <div class="sidebar-section mb-7">
       <h3 class="sidebar-title text-sm font-bold mb-4 text-text flex items-center gap-2">Category</h3>
@@ -167,13 +166,62 @@ function resetFilters() {
         <h4 class="text-sm font-bold">Price</h4>
         <i class="fa-solid fa-chevron-up text-xs text-text-light"></i>
       </div>
-      <div class="price-inputs flex items-center gap-3 mb-4">
+      
+      <!-- Price Display -->
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-sm font-semibold text-primary">${{ priceRange.min }}</span>
+        <span class="text-xs text-text-light">to</span>
+        <span class="text-sm font-semibold text-primary">${{ priceRange.max }}</span>
+      </div>
+      
+      <!-- Dual Range Slider -->
+      <div class="price-slider-container relative h-2 mb-4">
+        <!-- Track Background -->
+        <div class="absolute inset-0 bg-gray-200 rounded-full"></div>
+        
+        <!-- Active Track -->
+        <div 
+          class="absolute h-full bg-primary rounded-full"
+          :style="{
+            left: (priceRange.min / 500 * 100) + '%',
+            width: ((priceRange.max - priceRange.min) / 500 * 100) + '%'
+          }"
+        ></div>
+        
+        <!-- Min Slider -->
+        <input 
+          v-model.number="priceRange.min"
+          type="range"
+          class="price-range-input absolute w-full h-full appearance-none bg-transparent cursor-pointer z-10" 
+          min="0" 
+          max="500"
+          step="10"
+          @input="priceRange.min = Math.min(priceRange.min, priceRange.max - 10)"
+        >
+        
+        <!-- Max Slider -->
+        <input 
+          v-model.number="priceRange.max"
+          type="range"
+          class="price-range-input absolute w-full h-full appearance-none bg-transparent cursor-pointer z-20" 
+          min="0" 
+          max="500"
+          step="10"
+          @input="priceRange.max = Math.max(priceRange.max, priceRange.min + 10)"
+        >
+      </div>
+      
+      <!-- Price Inputs -->
+      <div class="price-inputs flex items-center gap-3">
         <div class="price-input flex items-center gap-1 border border-border rounded-lg px-3 py-2 bg-white flex-1">
           <span class="text-text-light text-sm">$</span>
           <input 
             v-model.number="priceRange.min"
             type="number" 
+            min="0"
+            :max="priceRange.max - 10"
             class="w-full border-none outline-none text-sm font-semibold text-text"
+            @change="priceRange.min = Math.max(0, Math.min(priceRange.min, priceRange.max - 10))"
           >
         </div>
         <span class="text-text-light">-</span>
@@ -181,18 +229,14 @@ function resetFilters() {
           <span class="text-text-light text-sm">$</span>
           <input 
             v-model.number="priceRange.max"
-            type="number" 
+            type="number"
+            :min="priceRange.min + 10"
+            max="500"
             class="w-full border-none outline-none text-sm font-semibold text-text"
+            @change="priceRange.max = Math.min(500, Math.max(priceRange.max, priceRange.min + 10))"
           >
         </div>
       </div>
-      <input 
-        v-model="priceSlider"
-        type="range"
-        class="price-slider w-full h-1 bg-border rounded-sm appearance-none cursor-pointer" 
-        min="0" 
-        max="500"
-      >
     </div>
 
     <!-- Sidebar Actions -->

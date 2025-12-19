@@ -10,7 +10,35 @@ export const useUserStore = defineStore('user', () => {
         avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=5F2EEA&color=fff'
     })
 
-    const addresses = ref(JSON.parse(localStorage.getItem('addresses')) || [])
+    const sampleAddresses = [
+        {
+            id: 1,
+            label: 'Home',
+            recipient: 'John Doe',
+            phone: '+1 234 567 890',
+            text: '123 Main Street, Apt 4B, New York, NY 10001, USA',
+            street: '123 Main Street, Apt 4B',
+            city: 'New York',
+            state: 'NY',
+            zipCode: '10001',
+            country: 'USA'
+        },
+        {
+            id: 2,
+            label: 'Office',
+            recipient: 'John Doe',
+            phone: '+1 234 567 891',
+            text: '456 Business Ave, Suite 200, Los Angeles, CA 90001, USA',
+            street: '456 Business Ave, Suite 200',
+            city: 'Los Angeles',
+            state: 'CA',
+            zipCode: '90001',
+            country: 'USA'
+        }
+    ]
+
+    const storedAddresses = JSON.parse(localStorage.getItem('addresses'))
+    const addresses = ref(storedAddresses && storedAddresses.length > 0 ? storedAddresses : sampleAddresses)
 
     const isLoggedIn = ref(true) // Default to logged in for demo
 

@@ -10,9 +10,14 @@ const userStore = useUserStore()
 
 const searchQuery = ref('')
 const showProfileDropdown = ref(false)
+const showMobileMenu = ref(false)
 
 function toggleProfileDropdown() {
   showProfileDropdown.value = !showProfileDropdown.value
+}
+
+function toggleMobileMenu() {
+  showMobileMenu.value = !showMobileMenu.value
 }
 
 function closeDropdown() {
@@ -32,15 +37,23 @@ function clearSearch() {
 </script>
 
 <template>
-  <header class="header flex items-center justify-between py-5 px-8 my-5 bg-card-bg rounded-[20px] shadow-sm">
-    <router-link to="/" class="logo flex items-center gap-3 group">
-      <div class="logo-icon w-9 h-9 bg-primary text-white rounded-[10px] flex items-center justify-center text-base group-hover:scale-105 transition-transform">
+  <header class="header flex items-center justify-between py-3 sm:py-5 px-4 sm:px-8 my-3 sm:my-5 bg-card-bg rounded-[16px] sm:rounded-[20px] shadow-sm">
+    <!-- Mobile Menu Toggle -->
+    <button 
+      class="mobile-menu-btn lg:hidden w-10 h-10 flex items-center justify-center text-text hover:text-primary transition-colors"
+      @click="toggleMobileMenu"
+    >
+      <i :class="['fa-solid text-xl', showMobileMenu ? 'fa-xmark' : 'fa-bars']"></i>
+    </button>
+
+    <router-link to="/" class="logo flex items-center gap-2 sm:gap-3 group">
+      <div class="logo-icon w-8 h-8 sm:w-9 sm:h-9 bg-primary text-white rounded-[8px] sm:rounded-[10px] flex items-center justify-center text-sm sm:text-base group-hover:scale-105 transition-transform">
         <i class="fa-solid fa-shapes"></i>
       </div>
-      <span class="font-bold text-xl text-text">lapakbaju</span>
+      <span class="font-bold text-lg sm:text-xl text-text hidden sm:inline">lapakbaju</span>
     </router-link>
 
-    <div class="search-bar flex-1 max-w-[400px] mx-10 bg-background px-5 py-3 rounded-xl flex items-center gap-3 border border-transparent focus-within:border-primary transition-colors">
+    <div class="search-bar hidden md:flex flex-1 max-w-[400px] mx-4 lg:mx-10 bg-background px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl items-center gap-3 border border-transparent focus-within:border-primary transition-colors">
       <i class="fa-solid fa-magnifying-glass text-text-light"></i>
       <input 
         v-model="searchQuery"
@@ -55,23 +68,28 @@ function clearSearch() {
       ></i>
     </div>
 
-    <div class="header-actions flex items-center gap-4">
-      <button class="lang-btn flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-[#6E7191] hover:text-primary transition-colors">
+    <div class="header-actions flex items-center gap-2 sm:gap-4">
+      <!-- Mobile Search Toggle -->
+      <button class="md:hidden w-10 h-10 flex items-center justify-center text-text-light hover:text-primary transition-colors">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+
+      <button class="lang-btn hidden sm:flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-[#6E7191] hover:text-primary transition-colors">
         ENG <i class="fa-solid fa-globe"></i>
       </button>
       
       <router-link 
         to="/wishlist"
-        class="action-btn flex items-center gap-2 px-[18px] py-2.5 bg-[#F0EBFF] text-primary rounded-[10px] text-[13px] font-semibold hover:bg-[#E5DEFF] transition-colors"
+        class="action-btn hidden sm:flex items-center gap-2 px-3 sm:px-[18px] py-2 sm:py-2.5 bg-[#F0EBFF] text-primary rounded-[10px] text-[12px] sm:text-[13px] font-semibold hover:bg-[#E5DEFF] transition-colors"
       >
-        Wishlist <i class="fa-regular fa-heart"></i>
+        <span class="hidden lg:inline">Wishlist</span> <i class="fa-regular fa-heart"></i>
       </router-link>
       
       <router-link 
         to="/cart"
-        class="action-btn cart-btn flex items-center gap-2 px-[18px] py-2.5 bg-[#F0EBFF] text-primary rounded-[10px] text-[13px] font-semibold hover:bg-[#E5DEFF] transition-colors relative"
+        class="action-btn cart-btn flex items-center gap-2 px-3 sm:px-[18px] py-2 sm:py-2.5 bg-[#F0EBFF] text-primary rounded-[10px] text-[12px] sm:text-[13px] font-semibold hover:bg-[#E5DEFF] transition-colors relative"
       >
-        Your Cart <i class="fa-solid fa-cart-shopping"></i>
+        <span class="hidden lg:inline">Your Cart</span> <i class="fa-solid fa-cart-shopping"></i>
         <span 
           v-show="cartStore.totalItems > 0"
           class="cart-badge absolute -top-1.5 -right-1.5 bg-danger text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center"
@@ -85,7 +103,7 @@ function clearSearch() {
           <img 
             :src="userStore.profile.avatar" 
             :alt="userStore.profile.name"
-            class="user-avatar w-10 h-10 rounded-full border-2 border-transparent hover:border-primary transition-colors"
+            class="user-avatar w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-transparent hover:border-primary transition-colors"
           >
         </div>
         
