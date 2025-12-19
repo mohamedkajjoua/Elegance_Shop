@@ -1,13 +1,15 @@
 <script setup>
 import AppHeader from '@/components/layout/AppHeader.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-text font-sans antialiased">
-    <div class="max-w-[1440px] mx-auto px-6">
+  <div class="min-h-screen bg-background text-text font-sans antialiased flex flex-col">
+    <div class="flex-1 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <AppHeader />
       <router-view />
     </div>
+    <AppFooter />
   </div>
 </template>
 

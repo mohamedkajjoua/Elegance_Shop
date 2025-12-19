@@ -58,6 +58,16 @@ const router = createRouter({
             path: '/wishlist',
             name: 'wishlist',
             component: () => import('@/views/WishlistView.vue')
+        },
+        {
+            path: '/contact',
+            name: 'contact',
+            component: () => import('@/views/ContactView.vue')
+        },
+        {
+            path: '/about',
+            name: 'about',
+            component: () => import('@/views/AboutView.vue')
         }
     ]
 })

@@ -24,11 +24,11 @@ function removeItem() {
 <template>
   <div class="cart-item">
     <div class="cart-item-image">
-      <img :src="item.image" :alt="item.title">
+      <img :src="item.image" :alt="item.name || item.title">
     </div>
     <div class="cart-item-details">
       <div>
-        <h3 class="cart-item-title">{{ item.title }}</h3>
+        <h3 class="cart-item-title">{{ item.name || item.title }}</h3>
         <p class="cart-item-variant">Size: {{ item.size }} • Color: {{ item.color }}</p>
       </div>
       <div class="cart-item-actions">
