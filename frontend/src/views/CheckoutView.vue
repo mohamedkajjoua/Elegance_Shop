@@ -46,14 +46,14 @@ function proceedToPayment() {
   <div class="pb-12">
     <Breadcrumb :items="breadcrumbItems" />
     
-    <div class="grid grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
       <!-- Checkout Form -->
-      <div class="col-span-2">
-        <div class="bg-white rounded-2xl p-8 mb-6">
-          <h2 class="text-2xl font-bold mb-6">Shipping Information</h2>
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 mb-4 md:mb-6">
+          <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6">Shipping Information</h2>
           
-          <form class="space-y-6">
-            <div class="grid grid-cols-2 gap-4">
+          <form class="space-y-4 md:space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div>
                 <label class="block text-sm font-medium mb-2">First Name *</label>
                 <input 
@@ -74,7 +74,7 @@ function proceedToPayment() {
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div>
                 <label class="block text-sm font-medium mb-2">Email *</label>
                 <input 
@@ -105,7 +105,7 @@ function proceedToPayment() {
               >
             </div>
 
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
               <div>
                 <label class="block text-sm font-medium mb-2">City *</label>
                 <input 
@@ -137,8 +137,8 @@ function proceedToPayment() {
           </form>
         </div>
 
-        <div class="bg-white rounded-2xl p-8">
-          <h2 class="text-2xl font-bold mb-6">Shipping Method</h2>
+        <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
+          <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6">Shipping Method</h2>
           
           <div class="space-y-4">
             <label 
@@ -168,9 +168,9 @@ function proceedToPayment() {
       </div>
 
       <!-- Order Summary -->
-      <div class="col-span-1">
-        <div class="bg-white rounded-2xl p-6 sticky top-5">
-          <h3 class="text-xl font-bold mb-6">Order Summary</h3>
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 sticky top-5">
+          <h3 class="text-lg md:text-xl font-bold mb-4 md:mb-6">Order Summary</h3>
           
           <div class="space-y-4 mb-6">
             <div 

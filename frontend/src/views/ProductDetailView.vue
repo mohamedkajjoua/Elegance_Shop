@@ -190,8 +190,8 @@ function submitReview() {
   <div class="pb-12">
     <Breadcrumb :items="breadcrumbItems" />
     
-    <div class="bg-white rounded-2xl p-8">
-      <div class="grid grid-cols-2 gap-12">
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         <!-- Image Gallery -->
         <div class="product-gallery">
           <div class="main-image-wrapper relative aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-4">
@@ -201,12 +201,12 @@ function submitReview() {
               class="w-full h-full object-cover"
             >
           </div>
-          <div class="thumbnails flex gap-3">
+          <div class="thumbnails flex gap-2 sm:gap-3 overflow-x-auto pb-2">
             <button 
               v-for="(thumb, index) in thumbnails"
               :key="index"
               :class="[
-                'thumb-btn w-20 h-20 rounded-xl overflow-hidden border-2 transition-all',
+                'thumb-btn w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all flex-shrink-0',
                 mainImage === thumb ? 'border-primary' : 'border-transparent hover:border-gray-300'
               ]"
               @click="changeImage(thumb)"
