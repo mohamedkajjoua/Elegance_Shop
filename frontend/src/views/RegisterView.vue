@@ -42,17 +42,17 @@ function handleRegister() {
 <template>
   <div class="min-h-[calc(100vh-120px)] flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
-      <div class="p-8">
-        <div class="text-center mb-8">
+      <div class="p-6 sm:p-8">
+        <div class="text-center mb-6 sm:mb-8">
           <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-white mb-4">
             <i class="fa-solid fa-shapes text-xl"></i>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900">Create Account</h2>
-          <p class="text-gray-500 mt-2">Sign up to get started with lapakbaju</p>
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Create Account</h2>
+          <p class="text-gray-500 mt-2 text-sm sm:text-base">Sign up to get started with lapakbaju</p>
         </div>
 
-        <form @submit.prevent="handleRegister" class="space-y-5">
-          <div class="grid grid-cols-2 gap-4">
+        <form @submit.prevent="handleRegister" class="space-y-4 sm:space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
               <input 
@@ -125,14 +125,14 @@ function handleRegister() {
             >
           </div>
 
-          <div class="flex items-center">
+          <div class="flex items-start sm:items-center">
             <input 
               v-model="agreeTerms"
               id="terms" 
               type="checkbox"
-              class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mt-0.5 sm:mt-0"
             >
-            <label for="terms" class="ml-2 block text-sm text-gray-700">
+            <label for="terms" class="ml-2 block text-xs sm:text-sm text-gray-700">
               I agree to the <a href="#" class="text-primary hover:underline">Terms of Service</a> and <a href="#" class="text-primary hover:underline">Privacy Policy</a>
             </label>
           </div>
@@ -154,7 +154,7 @@ function handleRegister() {
           </button>
         </form>
 
-        <p class="mt-8 text-center text-sm text-gray-600">
+        <p class="mt-6 sm:mt-8 text-center text-sm text-gray-600">
           Already have an account?
           <router-link to="/login" class="font-medium text-primary hover:text-primary-dark">Sign in</router-link>
         </p>

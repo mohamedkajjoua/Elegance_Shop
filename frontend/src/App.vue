@@ -1,10 +1,23 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
+
+const route = useRoute()
+
+// Check if current route is an admin page
+const isAdminPage = computed(() => route.path.startsWith('/admin'))
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-text font-sans antialiased flex flex-col">
+  <!-- Admin Layout - No header/footer -->
+  <div v-if="isAdminPage">
+    <router-view />
+  </div>
+  
+  <!-- User Layout - With header/footer -->
+  <div v-else class="min-h-screen bg-background text-text font-sans antialiased flex flex-col">
     <div class="flex-1 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <AppHeader />
       <router-view />
