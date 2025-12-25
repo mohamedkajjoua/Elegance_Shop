@@ -2,6 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\BrandController;
+
 
 
 /*
@@ -22,3 +26,7 @@ Route::get('/test', function () {
         'message' => 'Laravel API is working'
     ]);
 });
+
+Route::apiResource('users', UserController::class);
+Route::apiResource('categories', CategoryController::class);
+Route::apiResource('brands', BrandController::class);
