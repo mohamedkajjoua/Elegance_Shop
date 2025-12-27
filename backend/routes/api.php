@@ -3,10 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\CategoryController;
+
 use App\Http\Controllers\Api\BrandController;
-
-
+use App\Http\Controllers\Api\CategorieController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,5 +27,5 @@ Route::get('/test', function () {
 });
 
 Route::apiResource('users', UserController::class);
-Route::apiResource('categories', CategoryController::class);
+Route::apiResource('categories', CategorieController::class);
 Route::apiResource('brands', BrandController::class);
