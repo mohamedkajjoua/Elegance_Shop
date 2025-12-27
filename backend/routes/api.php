@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\UserController;
 
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\CategorieController;
+use App\Http\Controllers\auth\AuthJWTController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,5 +28,16 @@ Route::get('/test', function () {
 });
 
 Route::apiResource('users', UserController::class);
-Route::apiResource('categories', CategorieController::class);
 Route::apiResource('brands', BrandController::class);
+
+Route::prefix('auth')->group(function () {
+
+    Route::post('register', [AuthJWTController::class, 'register']);
+    Route::post('login', [AuthJWTController::class, 'login']);
+
+    Route::middleware('auth:api')->group(function () {
+        Route::post('logout', [AuthJWTController::class, 'logout']);
+        // Route::post('refresh', ...);
+        // Route::get('me', ...);
+    });
+});
