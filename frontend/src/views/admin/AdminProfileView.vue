@@ -1,8 +1,8 @@
 <script setup>
 import { ref, reactive } from 'vue'
+import AdminHeader from '@/components/admin/AdminHeader.vue'
+import AdminNav from '@/components/admin/AdminNav.vue'
 
-// Toggle state for submenu
-const productsOpen = ref(false)
 // Mobile sidebar toggle
 const sidebarOpen = ref(false)
 // Edit mode
@@ -103,112 +103,48 @@ const changePassword = () => {
   passwordForm.new = ''
   passwordForm.confirm = ''
 }
+
+// Image upload handler
+const imageInput = ref(null)
+const triggerImageUpload = () => {
+  imageInput.value?.click()
+}
+
+const handleImageUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      profile.avatar = e.target.result
+      editForm.avatar = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100 flex">
     <!-- Mobile Overlay -->
-    <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
-    
     <!-- Sidebar -->
-    <aside :class="[
-      'bg-slate-800 text-white flex flex-col fixed h-full z-50 transition-transform duration-300',
-      'w-64 lg:translate-x-0',
-      sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-    ]">
-      <!-- Logo -->
-      <div class="p-5 flex items-center gap-3 border-b border-slate-700">
-        <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
-          <i class="fa-solid fa-bag-shopping text-white"></i>
-        </div>
-        <span class="text-xl font-bold">LapakBaju</span>
-        <button @click="sidebarOpen = false" class="ml-auto text-slate-400 hover:text-white lg:hidden">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </div>
-
-      <!-- Navigation -->
-      <nav class="flex-1 overflow-y-auto py-4">
-        <p class="px-5 text-xs text-slate-500 uppercase tracking-wider mb-3">General</p>
-        
-        <router-link to="/admin" class="flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-grid-2 w-5"></i>
-          <span>Dashboard</span>
-        </router-link>
-
-        <!-- Products -->
-        <div class="relative">
-          <button @click="productsOpen = !productsOpen" class="w-full flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-            <i class="fa-solid fa-cube w-5"></i>
-            <span>Products</span>
-            <i :class="['fa-solid ml-auto text-xs transition-transform', productsOpen ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-          </button>
-          <div v-show="productsOpen" class="bg-slate-900/50 py-2">
-            <router-link to="/admin/products" class="block px-12 py-2 text-sm text-slate-300 hover:text-orange-500">Product List</router-link>
-            <router-link to="/admin/products/create" class="block px-12 py-2 text-sm text-slate-300 hover:text-orange-500">Create Product</router-link>
-          </div>
-        </div>
-
-        <!-- Category -->
-        <router-link to="/admin/category" class="flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-layer-group w-5"></i>
-          <span>Category</span>
-        </router-link>
-
-        <!-- Brand -->
-        <router-link to="/admin/brand" class="flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-tag w-5"></i>
-          <span>Brand</span>
-        </router-link>
-
-        <!-- Orders -->
-        <router-link to="/admin/orders" class="flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-cart-shopping w-5"></i>
-          <span>Orders</span>
-        </router-link>
-
-        <a href="#" class="flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-gear w-5"></i>
-          <span>Settings</span>
-        </a>
-
-        <p class="px-5 text-xs text-slate-500 uppercase tracking-wider mt-6 mb-3">Users</p>
-        
-        <router-link to="/admin/users" class="flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-users w-5"></i>
-          <span>User List</span>
-        </router-link>
-        
-        <!-- Profile - Active -->
-        <router-link to="/admin/profile" class="flex items-center gap-3 px-5 py-3 bg-orange-500/10 text-orange-500 border-l-4 border-orange-500">
-          <i class="fa-solid fa-user w-5"></i>
-          <span>Profile</span>
-        </router-link>
-      </nav>
-    </aside>
+    <AdminNav :isOpen="sidebarOpen" @close="sidebarOpen = false" />
 
     <!-- Main Content -->
     <div class="flex-1 lg:ml-64">
       <!-- Header -->
-      <header class="bg-white h-16 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10 shadow-sm">
-        <button @click="sidebarOpen = true" class="lg:hidden w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-gray-100">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-        <h1 class="text-base md:text-lg font-bold text-slate-800">ADMIN PROFILE</h1>
-        
-        <div class="flex items-center gap-2 md:gap-4">
-          <button class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-gray-100 hidden md:flex">
-            <i class="fa-solid fa-moon"></i>
-          </button>
-          <button class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-gray-100 relative">
-            <i class="fa-solid fa-bell"></i>
-            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          <div class="w-10 h-10 rounded-full bg-orange-500 overflow-hidden">
-            <img :src="profile.avatar" alt="Admin">
-          </div>
+      <!-- Header -->
+      <AdminHeader title="ADMIN PROFILE" @toggle-sidebar="sidebarOpen = true" >
+          <!-- Search - Hidden on mobile -->
+        <div class="relative hidden md:block">
+          <input type="text" placeholder="Search..." class="w-32 lg:w-48 pl-9 pr-3 py-2 bg-gray-100 rounded-lg text-sm">
+          <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
         </div>
-      </header>
+      </AdminHeader>
 
       <!-- Page Content -->
       <main class="p-4 md:p-6">
@@ -219,7 +155,17 @@ const changePassword = () => {
             <div class="bg-white rounded-lg md:rounded-xl p-4 md:p-6 shadow-sm text-center">
               <div class="relative inline-block mb-3 md:mb-4">
                 <img :src="profile.avatar" alt="Profile" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto object-cover border-4 border-orange-100">
-                <button class="absolute bottom-0 right-0 w-8 h-8 md:w-10 md:h-10 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-orange-600">
+                <input 
+                  ref="imageInput" 
+                  type="file" 
+                  accept="image/*" 
+                  @change="handleImageUpload" 
+                  class="hidden"
+                >
+                <button 
+                  @click="triggerImageUpload"
+                  class="absolute bottom-0 right-0 w-8 h-8 md:w-10 md:h-10 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-orange-600 transition-colors"
+                >
                   <i class="fa-solid fa-camera text-sm md:text-base"></i>
                 </button>
               </div>
