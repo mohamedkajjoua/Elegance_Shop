@@ -1,106 +1,27 @@
 <script setup>
 import { ref } from 'vue'
+import AdminHeader from '@/components/admin/AdminHeader.vue'
+import AdminNav from '@/components/admin/AdminNav.vue'
 const sidebarOpen = ref(false)
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100 flex">
     <!-- Mobile Overlay -->
-    <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
-    
     <!-- Sidebar -->
-    <aside :class="[
-      'bg-slate-800 text-white flex flex-col fixed h-full z-50 transition-transform duration-300',
-      'w-64 lg:translate-x-0',
-      sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-    ]">
-      <div class="p-4 sm:p-5 flex items-center gap-3 border-b border-slate-700">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-orange-500 rounded-xl flex items-center justify-center">
-          <i class="fa-solid fa-bag-shopping text-white text-sm sm:text-base"></i>
-        </div>
-        <span class="text-lg sm:text-xl font-bold">LapakBaju</span>
-        <button @click="sidebarOpen = false" class="ml-auto text-slate-400 hover:text-white lg:hidden p-1">
-          <i class="fa-solid fa-times text-lg"></i>
-        </button>
-      </div>
-
-      <nav class="flex-1 overflow-y-auto py-3 sm:py-4">
-        <p class="px-4 sm:px-5 text-xs text-slate-500 uppercase tracking-wider mb-2 sm:mb-3">General</p>
-        
-        <!-- Dashboard - Active -->
-        <router-link to="/admin" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 bg-orange-500/10 text-orange-500 border-l-4 border-orange-500">
-          <i class="fa-solid fa-grid-2 w-5"></i>
-          <span class="text-sm sm:text-base">Dashboard</span>
-        </router-link>
-
-        <router-link to="/admin/products" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-cube w-5"></i>
-          <span class="text-sm sm:text-base">Products</span>
-        </router-link>
-
-        <router-link to="/admin/category" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-layer-group w-5"></i>
-          <span class="text-sm sm:text-base">Category</span>
-        </router-link>
-
-        <router-link to="/admin/brand" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-tag w-5"></i>
-          <span class="text-sm sm:text-base">Brand</span>
-        </router-link>
-
-        <router-link to="/admin/orders" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-cart-shopping w-5"></i>
-          <span class="text-sm sm:text-base">Orders</span>
-        </router-link>
-
-        <a href="#" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-gear w-5"></i>
-          <span class="text-sm sm:text-base">Settings</span>
-        </a>
-
-        <p class="px-4 sm:px-5 text-xs text-slate-500 uppercase tracking-wider mt-4 sm:mt-6 mb-2 sm:mb-3">Users</p>
-        
-        <router-link to="/admin/users" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-users w-5"></i>
-          <span class="text-sm sm:text-base">User List</span>
-        </router-link>
-        
-        <router-link to="/admin/profile" class="flex items-center gap-3 px-4 sm:px-5 py-2.5 sm:py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-          <i class="fa-solid fa-user w-5"></i>
-          <span class="text-sm sm:text-base">Profile</span>
-        </router-link>
-      </nav>
-    </aside>
+    <AdminNav :isOpen="sidebarOpen" @close="sidebarOpen = false" />
 
     <!-- Main Content -->
     <div class="flex-1 lg:ml-64">
       <!-- Header -->
-      <header class="bg-white h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-10 shadow-sm gap-2">
-        <button @click="sidebarOpen = true" class="lg:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-gray-100 flex-shrink-0">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-        <h1 class="text-sm sm:text-base md:text-lg font-bold text-slate-800 truncate">DASHBOARD</h1>
-        <div class="flex items-center gap-1 sm:gap-2 md:gap-3">
-          <button class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-gray-100 hidden sm:flex">
-            <i class="fa-solid fa-moon text-sm sm:text-base"></i>
-          </button>
-          <button class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-gray-100 relative">
-            <i class="fa-solid fa-bell text-sm sm:text-base"></i>
-            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          <button class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-gray-100 hidden sm:flex">
-            <i class="fa-solid fa-gear text-sm sm:text-base"></i>
-          </button>
-          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500 overflow-hidden flex-shrink-0">
-            <img src="https://ui-avatars.com/api/?name=Admin&background=F97316&color=fff" alt="Admin" class="w-full h-full">
-          </div>
-          <!-- Search - Hidden on mobile -->
-          <div class="relative hidden md:block">
-            <input type="text" placeholder="Search..." class="w-32 lg:w-48 pl-9 pr-3 py-2 bg-gray-100 rounded-lg text-sm">
-            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-          </div>
+      <!-- Header -->
+      <AdminHeader title="DASHBOARD" @toggle-sidebar="sidebarOpen = true">
+        <!-- Search - Hidden on mobile -->
+        <div class="relative hidden md:block">
+          <input type="text" placeholder="Search..." class="w-32 lg:w-48 pl-9 pr-3 py-2 bg-gray-100 rounded-lg text-sm">
+          <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
         </div>
-      </header>
+      </AdminHeader>
 
       <main class="p-3 sm:p-4 md:p-6">
         <!-- Welcome Banner -->

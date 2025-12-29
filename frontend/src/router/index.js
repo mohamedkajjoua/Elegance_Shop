@@ -179,6 +179,12 @@ const router = createRouter({
             name: 'admin-profile',
             component: () => import('@/views/admin/AdminProfileView.vue'),
             meta: { title: 'Profile - Admin Panel' }
+        },
+        {
+            path: '/admin/settings',
+            name: 'admin-settings',
+            component: () => import('@/views/admin/AdminSettingsView.vue'),
+            meta: { title: 'Settings - Admin Panel' }
         }
     ]
 })
