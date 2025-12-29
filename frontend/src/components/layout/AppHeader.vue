@@ -56,8 +56,40 @@ function clearSearch() {
       <div class="logo-icon w-8 h-8 sm:w-9 sm:h-9 bg-primary text-white rounded-lg sm:rounded-xl flex items-center justify-center text-sm sm:text-base group-hover:scale-105 transition-transform">
         <i class="fa-solid fa-shapes"></i>
       </div>
-      <span class="font-bold text-base sm:text-lg md:text-xl text-text hidden sm:inline">lapakbaju</span>
+      <span class="font-bold text-base sm:text-lg md:text-xl text-text hidden sm:inline">Elegance Shop</span>
     </router-link>
+
+    <!-- Desktop Navigation -->
+    <nav class="hidden lg:flex items-center gap-1">
+      <router-link 
+        to="/" 
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        active-class="text-primary bg-primary/10"
+      >
+        Home
+      </router-link>
+      <router-link 
+        to="/shop" 
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        active-class="text-primary bg-primary/10"
+      >
+        Shop
+      </router-link>
+      <router-link 
+        to="/about" 
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        active-class="text-primary bg-primary/10"
+      >
+        About
+      </router-link>
+      <router-link 
+        to="/contact" 
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        active-class="text-primary bg-primary/10"
+      >
+        Contact
+      </router-link>
+    </nav>
 
     <!-- Desktop Search Bar -->
     <div class="search-bar hidden md:flex flex-1 max-w-[400px] mx-4 lg:mx-10 bg-background px-4 py-2.5 rounded-xl items-center gap-3 border border-transparent focus-within:border-primary transition-colors">
@@ -192,6 +224,56 @@ function clearSearch() {
         Cancel
       </button>
     </div>
+  </div>
+
+  <!-- Mobile Navigation Menu -->
+  <div 
+    v-show="showMobileMenu"
+    class="lg:hidden bg-card-bg mx-2 sm:mx-4 mb-3 rounded-xl shadow-sm animate-fade-in overflow-hidden"
+  >
+    <nav class="flex flex-col p-2">
+      <router-link 
+        to="/" 
+        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        @click="showMobileMenu = false"
+      >
+        <i class="fa-solid fa-home w-5 text-center"></i>
+        Home
+      </router-link>
+      <router-link 
+        to="/shop" 
+        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        @click="showMobileMenu = false"
+      >
+        <i class="fa-solid fa-store w-5 text-center"></i>
+        Shop
+      </router-link>
+      <router-link 
+        to="/about" 
+        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        @click="showMobileMenu = false"
+      >
+        <i class="fa-solid fa-info-circle w-5 text-center"></i>
+        About
+      </router-link>
+      <router-link 
+        to="/contact" 
+        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        @click="showMobileMenu = false"
+      >
+        <i class="fa-solid fa-envelope w-5 text-center"></i>
+        Contact
+      </router-link>
+      <hr class="my-2 border-border">
+      <router-link 
+        to="/wishlist" 
+        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        @click="showMobileMenu = false"
+      >
+        <i class="fa-solid fa-heart w-5 text-center"></i>
+        Wishlist
+      </router-link>
+    </nav>
   </div>
 </template>
 
