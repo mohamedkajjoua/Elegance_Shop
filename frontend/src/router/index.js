@@ -7,6 +7,8 @@ import ShopView from '@/views/ShopView.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import Dashboard from '../views/admin/Dashboard.vue'
 import AdminProductList from '../components/AdminProduct.vue' // Ton composant de la tâche précédente (CRUD)
+import Products from '../views/admin/Products.vue'
+
 
 
 
@@ -200,6 +202,11 @@ const router = createRouter({
         path: '/admin',
       component: AdminLayout, // Le parent qui contient Sidebar + Navbar
       children: [
+        {
+  path: 'products',
+  name: 'admin-products',
+  component: Products // Utilise le composant complet
+}
         {
           path: 'dashboard', // Accessible via /admin/dashboard
           name: 'admin-dashboard',
