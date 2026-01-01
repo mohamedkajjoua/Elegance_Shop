@@ -8,6 +8,13 @@ use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\CategorieController;
 use App\Http\Controllers\auth\AuthJWTController;
 
+
+use App\Http\Controllers\Api\Admin\ProductController;
+
+
+Route::prefix('admin')->group(function () {
+    Route::apiResource('products', ProductController::class);
+});
 /*
 |--------------------------------------------------------------------------
 | API Routes
