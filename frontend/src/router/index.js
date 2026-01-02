@@ -7,7 +7,7 @@ import ShopView from '@/views/ShopView.vue'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import Dashboard from '@/views/admin/Dashboard.vue'
-import AdminProduct from '@/components/AdminProduct.vue' // Ton composant de la tâche précédente (CRUD)
+import AdminProduct from '@/components/admin/AdminProduct.vue' // Ton composant de la tâche précédente (CRUD)
 import Products from '@/views/admin/Products.vue' // Importe le fichier qu'on vient de créer
 
 
@@ -239,7 +239,7 @@ const router = createRouter({
       {
         path: 'products', // Accessible via /admin/products
         name: 'admin-products',
-        component: AdminProductList
+        component: AdminProduct
       },
 
 
