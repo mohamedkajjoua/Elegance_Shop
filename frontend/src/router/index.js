@@ -4,10 +4,13 @@ import ShopView from '@/views/ShopView.vue'
 
 
 // Import des composants
-import AdminLayout from '../layouts/AdminLayout.vue'
-import Dashboard from '../views/admin/Dashboard.vue'
-import AdminProductList from '../components/AdminProduct.vue' // Ton composant de la tâche précédente (CRUD)
-import Products from '../views/admin/Products.vue'
+
+
+import AdminLayout from '@/layouts/AdminLayout.vue'
+import Dashboard from '@/views/admin/Dashboard.vue'
+import AdminProduct from '@/components/admin/AdminProduct.vue' // Ton composant de la tâche précédente (CRUD)
+import Products from '@/views/admin/Products.vue' // Importe le fichier qu'on vient de créer
+
 
 
 
@@ -195,6 +198,7 @@ const router = createRouter({
             name: 'admin-settings',
             component: () => import('@/views/admin/AdminSettingsView.vue'),
             meta: { title: 'Settings - Admin Panel' }
+<<<<<<< HEAD
         }
 
 
@@ -211,21 +215,58 @@ const router = createRouter({
           path: 'dashboard', // Accessible via /admin/dashboard
           name: 'admin-dashboard',
           component: Dashboard
+=======
+>>>>>>> 46617f7a3efb0467b74e2fc247f2cff8c9682d86
         },
-        {
-          path: 'products', // Accessible via /admin/products
-          name: 'admin-products',
-          component: AdminProductList // Ton CRUD produits s'affichera DANS le layout
-        },
-        // Redirection par défaut vers dashboard si on tape juste /admin
-        {
-          path: '',
-          redirect: '/admin/dashboard'
-        }
+
+
+
+    //     path: '/admin',
+    //   component: AdminLayout, // Le parent qui contient Sidebar + Navbar
+    //   children: [
+//         {
+//   path: 'products',
+//   name: 'admin-products',
+//   component: Products // Utilise le composant complet
+// }
+//         {
+//           path: 'dashboard', // Accessible via /admin/dashboard
+//           name: 'admin-dashboard',
+//           component: Dashboard
+//         },
+//         {
+//           path: 'products', // Accessible via /admin/products
+//           name: 'admin-products',
+//           component: AdminProductList // Ton CRUD produits s'affichera DANS le layout
+//         },
+//         // Redirection par défaut vers dashboard si on tape juste /admin
+//         {
+//           path: '',
+//           redirect: '/admin/dashboard'
+//         }
+
+
+
+{
+    path: '/admin',
+    component: AdminLayout, // Le cadre principal (Sidebar + Header)
+    children: [
+      {
+        path: 'dashboard', // Accessible via /admin/dashboard
+        name: 'admin-dashboard',
+        component: Dashboard
+      },
+      {
+        path: 'products', // Accessible via /admin/products
+        name: 'admin-products',
+        component: AdminProduct
+      },
+
 
     ]
+}
+]
 })
-
 // Navigation guard to update document title
 router.beforeEach((to, from, next) => {
     document.title = to.meta.title || 'Fashion Store'
