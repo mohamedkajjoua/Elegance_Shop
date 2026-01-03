@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\admin\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
@@ -17,18 +18,14 @@ use App\Http\Controllers\auth\AuthJWTController;
 |--------------------------------------------------------------------------
 */
 
-//
-// 🔹 Public test routes
-//
-Route::get('/test', function () {
-    return response()->json([
-        'status' => true,
-        'message' => 'Laravel API is working'
-    ]);
-});
 
-Route::apiResource('users', UserController::class);
-Route::apiResource('brands', BrandController::class);
+
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::prefix('auth')->group(function () {
 
@@ -39,5 +36,22 @@ Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthJWTController::class, 'logout']);
         Route::post('refresh', [AuthJWTController::class, 'refresh']);
         Route::get('me', [AuthJWTController::class, 'me']);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Product Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::get('/{id}', [ProductController::class, 'show']);
+
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/', [ProductController::class, 'store']);                 // create
+        Route::post('/{id}', [ProductController::class, 'update']);
+        Route::delete('/{id}', [ProductController::class, 'destroy']);         // delete
+        Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     });
 });
