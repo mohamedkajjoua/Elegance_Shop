@@ -1,46 +1,11 @@
-<script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-
-const router = useRouter();
-
-const formData = ref({
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  password: "",
-  password_confirmation: "",
-});
-const showPassword = ref(false);
-const agreeTerms = ref(false);
-const isLoading = ref(false);
-
-function togglePassword() {
-  showPassword.value = !showPassword.value;
-}
-
-function handleRegister() {
-  if (formData.value.password !== formData.value.confirmPassword) {
-    alert("Passwords do not match!");
-    return;
-  }
-
-  if (!agreeTerms.value) {
-    alert("Please agree to the terms and conditions");
-    return;
-  }
-
-  isLoading.value = true;
-
-  // Simulate API call
-  setTimeout(() => {
-    router.push("/login");
-  }, 1500);
-}
-</script>
-
 <template>
+  <p v-if="authStore.success" class="text-green-600 text-center">
+    {{ authStore.success }}
+  </p>
+
+  <p v-if="authStore.error" class="text-red-600 text-center">
+    {{ authStore.error }}
+  </p>
   <div class="min-h-[calc(100vh-120px)] flex items-center justify-center p-4">
     <div
       class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden"
@@ -64,7 +29,8 @@ function handleRegister() {
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
               <input
-                v-model="formData.firstName"
+                v-model="formData.first_name"
+                :class="{ 'border-red-500': validationErrors.first_name }"
                 type="text"
                 class="block w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
                 placeholder="Kif"
@@ -74,7 +40,8 @@ function handleRegister() {
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
               <input
-                v-model="formData.lastName"
+                v-model="formData.last_name"
+                :class="{ 'border-red-500': validationErrors.last_name }"
                 type="text"
                 class="block w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
                 placeholder="Mohamed"
@@ -91,6 +58,7 @@ function handleRegister() {
               </div>
               <input
                 v-model="formData.email"
+                :class="{ 'border-red-500': validationErrors.email }"
                 type="email"
                 class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
                 placeholder="john@example.com"
@@ -106,7 +74,8 @@ function handleRegister() {
               </div>
               <input
                 v-model="formData.phone"
-                type="email"
+                :class="{ 'border-red-500': validationErrors.phone }"
+                type="text"
                 class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
                 placeholder="+212-621-000-603"
                 required
@@ -122,6 +91,7 @@ function handleRegister() {
               </div>
               <input
                 v-model="formData.password"
+                :class="{ 'border-red-500': validationErrors.password }"
                 :type="showPassword ? 'text' : 'password'"
                 class="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
                 placeholder="••••••••"
@@ -141,6 +111,7 @@ function handleRegister() {
             <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
             <input
               v-model="formData.password_confirmation"
+              :class="{ 'border-red-500': validationErrors.password_confirmation }"
               :type="showPassword ? 'text' : 'password'"
               class="block w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
               placeholder="••••••••"
@@ -164,10 +135,10 @@ function handleRegister() {
 
           <button
             type="submit"
-            :disabled="isLoading"
+            :disabled="authStore.isLoading"
             :class="[
               'w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-primary transition-all transform hover:scale-[1.02]',
-              isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-primary-dark',
+              authStore.isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-primary-dark',
             ]"
           >
             <template v-if="isLoading">
@@ -187,3 +158,45 @@ function handleRegister() {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import type { IRegisterRequest } from "../types/authTypes";
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth/auth";
+
+const router = useRouter();
+const authStore = useAuthStore();
+const showPassword = ref(false);
+const agreeTerms = ref(false);
+const isLoading = false;
+
+const formData = reactive<IRegisterRequest>({
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  role: "customer",
+  password: "",
+  password_confirmation: "",
+});
+
+// error :coming from the backend
+const validationErrors = ref<Record<string, string[]>>({});
+
+function togglePassword() {
+  showPassword.value = !showPassword.value;
+}
+
+const handleRegister = async () => {
+  validationErrors.value = {};
+
+  const res = await authStore.register(formData);
+
+  if (res.success) {
+    router.push("/login");
+  } else if (res.errors) {
+    validationErrors.value = res.errors;
+  }
+};
+</script>

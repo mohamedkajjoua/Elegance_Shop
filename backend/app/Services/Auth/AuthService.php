@@ -50,7 +50,8 @@ class AuthService
         $token = auth('api')->attempt($credentials);
         if (!$token) {
             throw ValidationException::withMessages([
-                'email' => ['The entered data is incorrect']
+                'email' => ['Email or password is incorrect'],
+
             ]);
         }
         $user = auth('api')->user();
@@ -64,7 +65,7 @@ class AuthService
             'expires_in' => auth('api')->factory()->getTTL() * 60,
 
             'permissions' => $user->getAllPermissions(),
-            'permissions' => $user->getPermissionsByModule()
+            'permissions_by_module' => $user->getPermissionsByModule()
         ];
     }
 
