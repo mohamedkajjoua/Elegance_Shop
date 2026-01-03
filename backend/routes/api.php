@@ -37,7 +37,7 @@ Route::prefix('auth')->group(function () {
 
     Route::middleware('auth:api')->group(function () {
         Route::post('logout', [AuthJWTController::class, 'logout']);
-        // Route::post('refresh', ...);
-        // Route::get('me', ...);
+        Route::post('refresh', [AuthJWTController::class, 'refresh']);
+        Route::get('me', [AuthJWTController::class, 'me']);
     });
 });
