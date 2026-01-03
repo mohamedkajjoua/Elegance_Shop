@@ -8,17 +8,33 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Product;
 use App\Models\ProductVariant;
+
 class ProductImage extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    public function product():BelongsTo
+
+
+    protected $fillable = [
+        'product_id',
+        'image_url',
+        'is_primary',
+        'sort_order',
+    ];
+
+    protected $casts = [
+        'is_primary' => 'boolean',
+        'sort_order' => 'integer',
+    ];
+
+
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function productVariant():BelongsTo
+    public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class,'product_variant_id');
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 }

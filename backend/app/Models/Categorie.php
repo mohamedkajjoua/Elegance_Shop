@@ -10,11 +10,18 @@ use App\Models\Product;
 
 class Categorie extends Model
 {
-     use HasFactory;
+    use HasFactory;
     use SoftDeletes;
 
 
-    public function products():HasMany
+    protected $fillable = [
+        'name',
+
+    ];
+
+
+
+    public function products(): HasMany
     {
         return $this->hasMany(Product::class);
     }
