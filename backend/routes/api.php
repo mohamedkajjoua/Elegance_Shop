@@ -5,8 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 
-use App\Http\Controllers\Api\BrandController;
-use App\Http\Controllers\Api\CategorieController;
+
 use App\Http\Controllers\auth\AuthJWTController;
 
 /*
@@ -45,13 +44,23 @@ Route::prefix('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('products')->group(function () {
+    Route::get('/search', [ProductController::class, 'search']);
+    Route::get('/filter', [ProductController::class, 'filter']);
+    Route::get('/featured', [ProductController::class, 'featured']);
+    Route::get('/best-sellers', [ProductController::class, 'bestSellers']);
+
     Route::get('/', [ProductController::class, 'index']);
+
+
+
     Route::get('/{id}', [ProductController::class, 'show']);
+    Route::get('/{id}/related', [ProductController::class, 'related']);
+
 
     Route::middleware('auth:api')->group(function () {
-        Route::post('/', [ProductController::class, 'store']);                 // create
+        Route::post('/', [ProductController::class, 'store']);
         Route::post('/{id}', [ProductController::class, 'update']);
-        Route::delete('/{id}', [ProductController::class, 'destroy']);         // delete
+        Route::delete('/{id}', [ProductController::class, 'destroy']);
         Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     });
 });
