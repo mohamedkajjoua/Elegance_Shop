@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\UserController;
 
 
 use App\Http\Controllers\auth\AuthJWTController;
+use App\Http\Controllers\user\ProductSearchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,17 +45,17 @@ Route::prefix('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('products')->group(function () {
-    Route::get('/search', [ProductController::class, 'search']);
-    Route::get('/filter', [ProductController::class, 'filter']);
-    Route::get('/featured', [ProductController::class, 'featured']);
-    Route::get('/best-sellers', [ProductController::class, 'bestSellers']);
+    Route::get('/search', [ProductSearchController::class, 'search']);
+    Route::get('/filter', [ProductSearchController::class, 'filter']);
+    Route::get('/featured', [ProductSearchController::class, 'featured']);
+    Route::get('/best-sellers', [ProductSearchController::class, 'bestSellers']);
 
     Route::get('/', [ProductController::class, 'index']);
 
 
 
     Route::get('/{id}', [ProductController::class, 'show']);
-    Route::get('/{id}/related', [ProductController::class, 'related']);
+    Route::get('/{id}/related', [ProductSearchController::class, 'related']);
 
 
     Route::middleware('auth:api')->group(function () {
