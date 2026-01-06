@@ -11,7 +11,7 @@ class ProductSearchService
            Product search
     */
 
-    public function searchProducts(string $query, int $perPage = 15)
+    public function searchProducts(string $query, int $perPage = 10)
     {
 
         return Product::where(function ($q) use ($query) {
@@ -29,7 +29,7 @@ class ProductSearchService
 
     //Product Filtering
 
-    public function filterProduct($filters = [], $perPage = 15)
+    public function filterProduct($filters = [], $perPage = 10)
     {
         $query = Product::with(['category', 'brand', 'variants', 'images']);
 
@@ -40,13 +40,35 @@ class ProductSearchService
         if (!empty($filters['brand_id'])) {
             $query->where('brand_id', $filters['brand_id']);
         }
+        // Size filter
+        if (isset($filters['size']) && $filters['size'] !== '') {
+            $query->whereHas('variants', function ($q) use ($filters) {
 
-        if (!empty($filters['min_price'] && !empty($filters['max_price']))) {
-            $query->whereBetween('final_price', [
-                $filters['min_price'],
-                $filters['max_price']
-            ]);
+                $q->where('size', 'LIKE', $filters['size']);
+            });
         }
+
+        // Color filter
+        if (isset($filters['color']) && $filters['color'] !== '' && $filters['color'] !== null) {
+            $query->whereHas('variants', function ($q) use ($filters) {
+                $q->whereRaw('LOWER(color) = LOWER(?)', [$filters['color']]);
+            });
+        }
+        //filter price
+        if (isset($filters['min_price']) && isset($filters['max_price'])) {
+
+
+            $min = (float) $filters['min_price'];
+            $max = (float) $filters['max_price'];
+
+            $query->whereBetween('final_price', [$min, $max]);
+        } elseif (isset($filters['min_price'])) {
+            $query->where('final_price', '>=', (float) $filters['min_price']);
+        } elseif (isset($filters['max_price'])) {
+            $query->where('final_price', '<=', (float) $filters['max_price']);
+        }
+
+
         if (!empty($filters['is_featured'])) {
             $query->where('is_featured', true);
         }
@@ -111,20 +133,21 @@ class ProductSearchService
     }
 
     //Get similar products
-    public function getRelatedProducts(int $productId, int $limit = 6): array
+
+    public function getRelatedProducts(int $productId, int $limit = 6)
     {
         $product = Product::find($productId);
 
         if (!$product) {
-            return [];
+            return collect([]);
         }
-
-        return Product::where('is_active', true)
+        return Product::query()
+            ->where('is_active', true)
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $productId)
-            ->with(['category', 'brand', 'variants', 'images'])
+            ->with(['category', 'images'])
+            ->inRandomOrder()
             ->limit($limit)
-            ->get()
-            ->toArray();
+            ->get();
     }
 }

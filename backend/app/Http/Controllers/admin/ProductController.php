@@ -19,7 +19,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 15);
+        $perPage = $request->input('per_page', 9);
         $products = $this->productServices->getAllProducts($perPage);
 
         return response()->json([
