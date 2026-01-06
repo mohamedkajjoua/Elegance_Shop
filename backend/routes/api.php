@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\UserController;
 
 
 use App\Http\Controllers\auth\AuthJWTController;
+use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 
 /*
@@ -90,6 +91,21 @@ Route::prefix('categories')->group(function () {
 Route::prefix('brands')->group(function () {
 
     Route::get('/', [BrandController::class, 'index']);
+
+    Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
+        //
+    });
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| home Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('home')->group(function () {
+
+    Route::get('/getCategoryToHome', [HomeController::class, 'getCategoryToHome']);
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
         //

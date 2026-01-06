@@ -63,6 +63,13 @@
           </button>
         </span>
       </div>
+      <div v-if="productStore.isLoading" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div v-for="n in 8" :key="n" class="animate-pulse">
+          <div class="bg-gray-200 h-64 rounded-2xl mb-4"></div>
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+        </div>
+      </div>
 
       <ProductGrid />
 
@@ -143,8 +150,6 @@ const activeFilters = ref([]);
 // Methods
 
 function handleApplyFilters(filters: any) {
-  console.log("Applying filters:", filters);
-
   router.push({
     query: {
       ...route.query,
@@ -182,8 +187,6 @@ const fetchDataFromURL = async () => {
     size: query.size,
   };
 
-  console.log("Params before cleaning:", params);
-
   const cleanParams: any = {};
 
   for (const [key, value] of Object.entries(params)) {
@@ -191,8 +194,6 @@ const fetchDataFromURL = async () => {
       cleanParams[key] = value;
     }
   }
-
-  console.log("Params after cleaning:", cleanParams);
 
   await productStore.fetchProduct(cleanParams);
 };
