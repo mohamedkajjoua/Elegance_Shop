@@ -30,9 +30,11 @@
             class="border-none bg-transparent text-sm font-semibold text-text cursor-pointer outline-none p-2"
           >
             <option value="popular">Most Popular</option>
+            <option value="trending">Trending</option>
             <option value="newest">Newest</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
+            <option value="oldest">Oldest</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
           </select>
           <div
             class="filter-icon w-9 h-9 flex items-center justify-center bg-background rounded-lg cursor-pointer hover:bg-gray-200 transition-colors lg:hidden"
