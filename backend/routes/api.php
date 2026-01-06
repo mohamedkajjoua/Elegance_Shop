@@ -4,7 +4,7 @@ use App\Http\Controllers\admin\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
-
+use App\Http\Controllers\Api\CartController;
 
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\user\ProductSearchController;
@@ -64,4 +64,17 @@ Route::prefix('products')->group(function () {
         Route::delete('/{id}', [ProductController::class, 'destroy']);
         Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     });
+
+
+
+
+
+});
+Route::middleware('auth:api')->group(function () {
+
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
 });
