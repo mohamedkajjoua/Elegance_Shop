@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useCartStore } from "@/stores/cart";
 import { useWishlistStore } from "@/stores/wishlist";
+import { getProductById, getProductsList } from "@/data/products";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
 import { useProductShopStore } from "@/stores/user/ProductShop";
@@ -13,150 +14,114 @@ const router = useRouter();
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
 
-// Store setup
-const productShopStore = useProductShopStore();
-const { product, relatedProducts } = storeToRefs(productShopStore);
+//new
+const productDetail = useProductShopStore();
+const { product } = storeToRefs(productDetail);
+onMounted(async () => {
+  await productDetail.fetchProductDetails(route.params.id as string);
 
-// --- Functions Definitions --
-
-const loadPageData = async (id: string) => {
-  await productShopStore.fetchProductDetails(id);
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-};
-
-const getColorHex = (colorName: string) => {
-  const map: Record<string, string> = {
-    black: "#000000",
-    white: "#FFFFFF",
-    red: "#EF4444",
-    blue: "#3B82F6",
-    green: "#10B981",
-    navy: "#1E3A5F",
-    gray: "#6B7280",
-    brown: "#92400E",
-  };
-  return map[colorName.toLowerCase()] || colorName;
-};
-
-// --- Lifecycle Hooks & Watchers ---
-
-onMounted(() => {
-  if (route.params.id) {
-    loadPageData(route.params.id as string);
+  if (product.value) {
+    mainImage.value = product.value.images.find((i) => i.is_primary)?.url || "";
   }
 });
-
-watch(
-  () => route.params.id,
-  (newId) => {
-    if (newId) {
-      loadPageData(newId as string);
-    }
-  }
-);
-
-watch(product, (newVal) => {
-  if (newVal) {
-    mainImage.value =
-      newVal.images?.find((i: any) => i.is_primary)?.url || newVal.images?.[0]?.url || "";
-  }
-});
-
-// --- Computed Properties ---
 
 const availableColors = computed(() => {
-  if (!product.value || !product.value.variants) return [];
-  const distinctColors = [...new Set(product.value.variants.map((v: any) => v.color))];
-
-  return distinctColors.map((color) => ({
-    name: color,
-    hex: getColorHex(color as string),
-  }));
+  if (!product.value) return [];
+  return [...new Set(product.value.variants.map((v) => v.color))];
 });
 
 const availableSizes = computed(() => {
-  if (!product.value || !product.value.variants) return [];
-  return [...new Set(product.value.variants.map((v: any) => v.size))];
+  if (!product.value) return [];
+  return [...new Set(product.value.variants.map((v) => v.size))];
 });
 
 const isSizeAvailable = (size: string) => {
   if (!selectedColor.value || !product.value) return true;
-  return product.value.variants?.some(
-    (v: any) => v.color === selectedColor.value && v.size === size
-  );
+
+  return product.value.variants.some((v) => v.color === selectedColor.value && v.size === size);
 };
 
 const selectedVariant = computed(() => {
   if (!product.value || !selectedColor.value || !selectedSize.value) return null;
 
-  return product.value.variants?.find(
-    (v: any) => v.color === selectedColor.value && v.size === selectedSize.value
+  return product.value.variants.find(
+    (v) => v.color === selectedColor.value && v.size === selectedSize.value
   );
 });
 
-//slider images product
-const thumbnails = computed(() => {
-  if (product.value?.images && product.value.images.length > 0) {
-    return product.value.images.map((img: any) => img.url);
-  }
-});
+//end new
 
-const isInWishlist = computed(() =>
-  product.value ? wishlistStore.isInWishlist(product.value.id) : false
-);
-
-const breadcrumbItems = computed(() => [
-  { label: "Category", to: "/" },
-  { label: "Shop", to: "/shop" },
-]);
-
-// --- State ---
+const thumbnails = [
+  "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=500",
+  "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=500",
+  "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=500",
+  "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500",
+];
 const mainImage = ref("");
 const selectedColor = ref("");
 const selectedSize = ref("");
 const quantity = ref(1);
 const activeTab = ref("description");
 
-// --- Methods ---
+/* const colors = [
+  { name: "black", hex: "#1A1A2E" },
+  { name: "navy", hex: "#1E3A5F" },
+  { name: "gray", hex: "#6B7280" },
+  { name: "brown", hex: "#92400E" },
+]; */
 
-function changeImage(src: string) {
+/* const sizes = ["S", "M", "L", "XL", "XXL"]; */
+
+const isInWishlist = computed(() => wishlistStore.isInWishlist(product.value.id));
+
+const breadcrumbItems = computed(() => [
+  { label: "Category", to: "/" },
+  { label: "Sweatshirt", to: "/" },
+  { label: product.value.title },
+]);
+
+// Related Products - get 4 products excluding current
+const relatedProducts = computed(() => {
+  const allProducts = getProductsList();
+  return allProducts
+    .filter((p) => p.id !== product.value.id)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 4);
+});
+
+function changeImage(src) {
   mainImage.value = src;
 }
 
-function selectColor(color: string) {
+function selectColor(color) {
   selectedColor.value = color;
 }
 
-function selectSize(size: string) {
+function selectSize(size) {
   selectedSize.value = size;
 }
 
-function updateQty(change: number) {
+function updateQty(change) {
   quantity.value = Math.max(1, Math.min(10, quantity.value + change));
 }
 
 const addToCart = () => {
-  if (!selectedVariant.value) {
-    alert("Please select color and size");
-    return;
-  }
+  if (!selectedVariant.value) return;
 
   console.log("Add to Cart:", {
     product_id: product.value?.id,
-    variant_id: selectedVariant.value.id,
-    quantity: quantity.value,
+    variant_id: selectedVariant.value.id, // هذا ما سنرسله للباك اند
+    quantity: 1,
   });
 
-  cartStore.addToCart({ ...product.value, ...selectedVariant.value, quantity: quantity.value });
   alert("Added to cart!");
 };
 
 function toggleWishlist() {
-  if (product.value) wishlistStore.toggleWishlist(product.value);
+  wishlistStore.toggleWishlist(product.value);
 }
 
-// Reviews Data & Logic
+// Reviews
 const reviews = ref([
   {
     id: 1,
@@ -191,8 +156,11 @@ const newReview = ref({
 });
 
 const reviewsCount = computed(() => reviews.value.length);
+
+// Reviews Slider
 const currentSlide = ref(0);
 const reviewsPerSlide = 2;
+
 const totalSlides = computed(() => Math.ceil(reviews.value.length / reviewsPerSlide));
 const visibleReviews = computed(() => {
   const start = currentSlide.value * reviewsPerSlide;
@@ -203,7 +171,7 @@ function nextSlide() {
   if (currentSlide.value < totalSlides.value - 1) {
     currentSlide.value++;
   } else {
-    currentSlide.value = 0;
+    currentSlide.value = 0; // Loop to start
   }
 }
 
@@ -211,15 +179,15 @@ function prevSlide() {
   if (currentSlide.value > 0) {
     currentSlide.value--;
   } else {
-    currentSlide.value = totalSlides.value - 1;
+    currentSlide.value = totalSlides.value - 1; // Loop to end
   }
 }
 
-function goToSlide(index: number) {
+function goToSlide(index) {
   currentSlide.value = index;
 }
 
-function setRating(rating: number) {
+function setRating(rating) {
   newReview.value.rating = rating;
 }
 
@@ -240,22 +208,23 @@ function submitReview() {
 
   reviews.value.unshift(review);
   newReview.value = { rating: 5, comment: "" };
-  currentSlide.value = 0;
+  currentSlide.value = 0; // Go back to first slide to show new review
   alert("Thank you for your review!");
 }
 </script>
 
 <template>
-  <div v-if="product" class="pb-12">
+  <div class="pb-12">
     <Breadcrumb :items="breadcrumbItems" />
 
     <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
+        <!-- Image Gallery -->
         <div class="product-gallery">
           <div
             class="main-image-wrapper relative aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-4"
           >
-            <img :src="mainImage" :alt="product.title" class="w-full h-full object-cover" />
+            <img :src="mainImage" :alt="product.name" class="w-full h-full object-cover" />
           </div>
           <div class="thumbnails flex gap-2 sm:gap-3 overflow-x-auto pb-2">
             <button
@@ -272,18 +241,21 @@ function submitReview() {
           </div>
         </div>
 
+        <!-- Product Info -->
         <div class="product-info">
+          <!-- Category Badge -->
           <span
             v-if="product.category"
             class="inline-block bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-3"
           >
-            {{ typeof product.category === "object" ? product.category.name : product.category }}
+            {{ product.category }}
           </span>
 
           <h1 class="text-2xl sm:text-3xl font-bold text-text mb-3">{{ product.title }}</h1>
 
-          <p v-if="product.short_description" class="text-text-light text-sm leading-relaxed mb-4">
-            {{ product.short_description }}
+          <!-- Short Description -->
+          <p v-if="product.description" class="text-text-light text-sm leading-relaxed mb-4">
+            {{ product.description }}
           </p>
 
           <div class="flex items-center gap-4 mb-6">
@@ -302,13 +274,14 @@ function submitReview() {
             </span>
           </div>
 
+          <!-- Color Selection -->
           <div class="mb-6">
             <h3 class="text-sm font-semibold mb-3">
               Color: <span class="text-text-light capitalize">{{ selectedColor }}</span>
             </h3>
             <div class="flex gap-3">
               <button
-                v-for="color in availableColors"
+                v-for="color in colors"
                 :key="color.name"
                 :class="[
                   'color-btn w-10 h-10 rounded-full border-2 transition-all',
@@ -320,13 +293,14 @@ function submitReview() {
             </div>
           </div>
 
+          <!-- Size Selection -->
           <div class="mb-6">
             <h3 class="text-sm font-semibold mb-3">
               Size: <span class="text-text-light">{{ selectedSize }}</span>
             </h3>
             <div class="flex gap-3">
               <button
-                v-for="size in availableSizes"
+                v-for="size in sizes"
                 :key="size"
                 :class="[
                   'size-select-btn min-w-[48px] h-12 px-4 rounded-xl border-2 font-semibold transition-all',
@@ -341,6 +315,7 @@ function submitReview() {
             </div>
           </div>
 
+          <!-- Quantity -->
           <div class="mb-8">
             <h3 class="text-sm font-semibold mb-3">Quantity</h3>
             <div class="flex items-center gap-4">
@@ -365,6 +340,7 @@ function submitReview() {
             </div>
           </div>
 
+          <!-- Actions -->
           <div class="flex gap-4">
             <button
               class="flex-1 bg-primary text-white py-4 px-8 rounded-xl font-bold text-lg hover:bg-primary-dark transition-colors"
@@ -388,6 +364,7 @@ function submitReview() {
             </button>
           </div>
 
+          <!-- Shipping & Category Info -->
           <div class="mt-6 p-4 bg-background rounded-xl space-y-3">
             <div class="flex items-center gap-3">
               <div
@@ -397,8 +374,7 @@ function submitReview() {
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-text-light text-sm">Shipping:</span>
-                <span v-if="product.shipping == 0" class="font-bold text-success">Free</span>
-                <span v-else class="font-bold text-success">{{ product.shipping }} $</span>
+                <span class="font-bold text-success">Free</span>
               </div>
             </div>
             <div v-if="product.category" class="flex items-center gap-3">
@@ -409,15 +385,14 @@ function submitReview() {
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-text-light text-sm">Category:</span>
-                <span class="font-bold text-text">{{
-                  typeof product.category === "object" ? product.category.name : product.category
-                }}</span>
+                <span class="font-bold text-text">{{ product.category }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Tabs -->
       <div class="mt-12">
         <div class="tabs flex gap-8 border-b border-border mb-6">
           <button
@@ -446,13 +421,24 @@ function submitReview() {
 
         <div v-show="activeTab === 'description'" class="tab-content">
           <p class="text-text-light leading-relaxed">
-            {{ product.short_description || "No description available." }}
+            Premium quality urban sweatshirt with modern design. Made from 100% organic cotton for
+            maximum comfort. Features a relaxed fit with ribbed cuffs and hem. Perfect for casual
+            outings or lounging at home.
           </p>
+          <ul class="mt-4 space-y-2 text-text-light">
+            <li><i class="fa-solid fa-check text-success mr-2"></i> 100% Organic Cotton</li>
+            <li><i class="fa-solid fa-check text-success mr-2"></i> Relaxed Fit</li>
+            <li><i class="fa-solid fa-check text-success mr-2"></i> Machine Washable</li>
+            <li><i class="fa-solid fa-check text-success mr-2"></i> Sustainable Production</li>
+          </ul>
         </div>
 
         <div v-show="activeTab === 'reviews'" class="tab-content">
+          <!-- Write Review Form -->
           <div class="write-review bg-background rounded-xl p-6 mb-8">
             <h3 class="font-bold text-lg mb-4">Write a Review</h3>
+
+            <!-- Star Rating -->
             <div class="mb-4">
               <label class="block text-sm font-medium text-text-light mb-2">Your Rating</label>
               <div class="flex gap-2">
@@ -469,6 +455,8 @@ function submitReview() {
                 </button>
               </div>
             </div>
+
+            <!-- Comment Input -->
             <div class="mb-4">
               <label class="block text-sm font-medium text-text-light mb-2">Your Comment</label>
               <textarea
@@ -478,6 +466,7 @@ function submitReview() {
                 class="w-full px-4 py-3 border border-border rounded-xl focus:border-primary outline-none text-sm resize-none"
               ></textarea>
             </div>
+
             <button
               class="bg-primary text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-primary-dark transition-colors"
               @click="submitReview"
@@ -486,6 +475,7 @@ function submitReview() {
             </button>
           </div>
 
+          <!-- Reviews Slider -->
           <div class="reviews-slider">
             <div class="flex justify-between items-center mb-6">
               <h3 class="font-bold text-lg">Customer Reviews ({{ reviewsCount }})</h3>
@@ -504,6 +494,8 @@ function submitReview() {
                 </button>
               </div>
             </div>
+
+            <!-- Slider Container -->
             <div class="slider-container overflow-hidden">
               <div
                 class="slider-track grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300"
@@ -530,14 +522,14 @@ function submitReview() {
                           ]"
                         ></i>
                       </div>
-                      <p class="text-text-light text-sm leading-relaxed">
-                        {{ review.comment }}
-                      </p>
+                      <p class="text-text-light text-sm leading-relaxed">{{ review.comment }}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <!-- Dots Navigation -->
             <div class="slider-dots flex justify-center gap-2 mt-6" v-if="totalSlides > 1">
               <button
                 v-for="(dot, index) in totalSlides"
@@ -549,6 +541,7 @@ function submitReview() {
                 @click="goToSlide(index)"
               ></button>
             </div>
+
             <div v-if="reviews.length === 0" class="text-center py-12 text-text-light">
               <i class="fa-solid fa-comment-dots text-5xl mb-4 opacity-30"></i>
               <p>No reviews yet. Be the first to review this product!</p>
@@ -558,6 +551,7 @@ function submitReview() {
       </div>
     </div>
 
+    <!-- Related Products Section -->
     <div class="mt-12 bg-white rounded-2xl p-6 sm:p-8">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl sm:text-2xl font-bold">You May Also Like</h2>
@@ -567,16 +561,12 @@ function submitReview() {
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <template v-if="relatedProducts?.length">
-          <ProductCard v-for="p in relatedProducts" :key="p.id" :product="p" />
-        </template>
-        <div v-else class="col-span-full text-center text-gray-400 py-10">
-          No related products found.
-        </div>
+        <ProductCard
+          v-for="relatedProduct in relatedProducts"
+          :key="relatedProduct.id"
+          :product="relatedProduct"
+        />
       </div>
     </div>
-  </div>
-  <div v-else class="flex justify-center items-center h-[50vh]">
-    <span class="loading loading-spinner loading-lg"></span>
   </div>
 </template>

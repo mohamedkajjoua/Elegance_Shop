@@ -2,7 +2,6 @@
   <header
     class="header flex items-center justify-between py-2.5 sm:py-4 md:py-5 px-3 sm:px-6 md:px-8 my-2 sm:my-4 md:my-5 bg-card-bg rounded-xl sm:rounded-2xl shadow-sm gap-2 sm:gap-4"
   >
-    <!-- Mobile Menu Toggle -->
     <button
       class="mobile-menu-btn lg:hidden w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-text hover:text-primary transition-colors flex-shrink-0"
       @click="toggleMobileMenu"
@@ -10,7 +9,6 @@
       <i :class="['fa-solid text-lg sm:text-xl', showMobileMenu ? 'fa-xmark' : 'fa-bars']"></i>
     </button>
 
-    <!-- Logo -->
     <router-link to="/" class="logo flex items-center gap-2 group flex-shrink-0">
       <div
         class="logo-icon w-8 h-8 sm:w-9 sm:h-9 bg-primary text-white rounded-lg sm:rounded-xl flex items-center justify-center text-sm sm:text-base group-hover:scale-105 transition-transform"
@@ -22,7 +20,6 @@
       >
     </router-link>
 
-    <!-- Desktop Navigation -->
     <nav class="hidden lg:flex items-center gap-1">
       <router-link
         to="/"
@@ -54,7 +51,6 @@
       </router-link>
     </nav>
 
-    <!-- Desktop Search Bar -->
     <div
       class="search-bar hidden md:flex flex-1 max-w-[400px] mx-4 lg:mx-10 bg-background px-4 py-2.5 rounded-xl items-center gap-3 border border-transparent focus-within:border-primary transition-colors"
     >
@@ -64,6 +60,7 @@
         type="text"
         placeholder="Search among 100+ products"
         class="bg-transparent flex-1 outline-none text-sm text-text placeholder-text-light"
+        @keyup.enter="handleSearch"
       />
       <i
         v-show="searchQuery"
@@ -72,9 +69,7 @@
       ></i>
     </div>
 
-    <!-- Header Actions -->
     <div class="header-actions flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
-      <!-- Mobile Search Toggle -->
       <button
         class="md:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-text-light hover:text-primary transition-colors rounded-lg hover:bg-background"
         @click="toggleMobileSearch"
@@ -82,14 +77,6 @@
         <i class="fa-solid fa-magnifying-glass text-sm sm:text-base"></i>
       </button>
 
-      <!-- Language (hidden on mobile) -->
-      <button
-        class="lang-btn hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors"
-      >
-        ENG <i class="fa-solid fa-globe"></i>
-      </button>
-
-      <!-- Wishlist (hidden on small mobile) -->
       <router-link
         to="/wishlist"
         class="action-btn hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors"
@@ -98,7 +85,6 @@
         <span class="hidden lg:inline">Wishlist</span>
       </router-link>
 
-      <!-- Cart -->
       <router-link
         to="/cart"
         class="action-btn cart-btn flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors relative"
@@ -113,7 +99,6 @@
         </span>
       </router-link>
 
-      <!-- User Profile -->
       <div v-if="authStore.isAuthenticated" class="user-profile-wrapper relative" @click.stop>
         <div class="user-profile cursor-pointer" @click="toggleProfileDropdown">
           <img
@@ -123,7 +108,6 @@
           />
         </div>
 
-        <!-- Profile Dropdown -->
         <div
           :class="[
             'profile-dropdown absolute top-[calc(100%+8px)] sm:top-[calc(100%+12px)] right-0 bg-card-bg rounded-xl shadow-lg min-w-[200px] sm:min-w-[220px] transition-all duration-200 z-50 border border-border',
@@ -182,7 +166,6 @@
     </div>
   </header>
 
-  <!-- Mobile Search Bar (slide-down) -->
   <div
     v-show="showMobileSearch"
     class="md:hidden bg-card-bg mx-2 sm:mx-4 mb-3 rounded-xl p-3 shadow-sm animate-fade-in"
@@ -196,6 +179,7 @@
         type="text"
         placeholder="Search products..."
         class="bg-transparent flex-1 outline-none text-sm text-text placeholder-text-light"
+        @keyup.enter="handleSearch"
       />
       <i
         v-show="searchQuery"
@@ -208,7 +192,6 @@
     </div>
   </div>
 
-  <!-- Mobile Navigation Menu -->
   <div
     v-show="showMobileMenu"
     class="lg:hidden bg-card-bg mx-2 sm:mx-4 mb-3 rounded-xl shadow-sm animate-fade-in overflow-hidden"
@@ -259,19 +242,21 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+<script setup lang="ts">
+import { ref, watch } from "vue";
+import { useRouter, useRoute } from "vue-router"; // Added useRoute
 import { useCartStore } from "@/stores/cart";
 import { useAuthStore } from "@/stores/auth/auth";
 import { useUserStore } from "@/stores/user";
 
 const router = useRouter();
+const route = useRoute(); // To sync input with URL
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const userStore = useUserStore();
 
 const searchQuery = ref("");
+let searchTimeout: any = null;
 const showProfileDropdown = ref(false);
 const showMobileMenu = ref(false);
 const showMobileSearch = ref(false);
@@ -301,7 +286,54 @@ const handleLogout = async () => {
 
 function clearSearch() {
   searchQuery.value = "";
+  // Optional: If you want clearing search to also return to all products
+  if (route.path === "/shop") {
+    router.push({ path: "/shop" });
+  }
 }
+
+// ✅ Corrected Handle Search (Redirects instead of Fetching)
+const handleSearch = () => {
+  // If search is too short, do nothing (or show error)
+  if (searchQuery.value.length > 0 && searchQuery.value.length < 2) {
+    return;
+  }
+
+  // If empty and on shop page, reset
+  if (!searchQuery.value && route.path === "/shop") {
+    router.push({ path: "/shop" });
+    return;
+  }
+
+  // Redirect to Shop page with Query
+  if (searchQuery.value.length >= 2) {
+    router.push({
+      path: "/shop",
+      query: { q: searchQuery.value },
+    });
+    // Close mobile search if open
+    showMobileSearch.value = false;
+  }
+};
+
+// Sync Input with URL (e.g. on page refresh)
+watch(
+  () => route.query.q,
+  (newQ) => {
+    searchQuery.value = (newQ as string) || "";
+  },
+  { immediate: true }
+);
+
+// Auto-search Debounce (Now pushes to router)
+watch(searchQuery, (newVal) => {
+  clearTimeout(searchTimeout);
+  if (newVal.length >= 2) {
+    searchTimeout = setTimeout(() => {
+      handleSearch();
+    }, 500);
+  }
+});
 </script>
 
 <style scoped>

@@ -102,7 +102,7 @@ class ProductService
         }
     }
 
-    public function getAllProducts($perPage = 15)
+    public function getAllProducts($perPage = 10)
     {
         return Product::with([
             'category',
@@ -258,18 +258,16 @@ class ProductService
         return [
             'id' => $product->id,
             'name' => $product->name,
-
-            'slug' => $product->slug ?? \Illuminate\Support\Str::slug($product->name),
+            'description' => $product->description,
+            'short_description' => $product->short_description,
             'price' => (float) $product->price,
             'final_price' => (float) $product->final_price,
+            'shipping' => (float) $product->shipping,
             'discount' => (int) $product->discount,
             'is_active' => (bool) $product->is_active,
             'is_featured' => (bool) $product->is_featured,
-
             'category' => $product->category ? ['id' => $product->category->id, 'name' => $product->category->name] : null,
             'brand' => $product->brand ? ['id' => $product->brand->id, 'name' => $product->brand->name] : null,
-
-
             'variants' => $product->variants->map(function ($variant) {
                 return [
                     'id' => $variant->id,
@@ -279,7 +277,6 @@ class ProductService
                     'price' => $variant->price,
                 ];
             }),
-
 
             'images' => $product->images->map(function ($image) {
                 return [

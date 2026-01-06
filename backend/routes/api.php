@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\admin\BrandController;
+use App\Http\Controllers\admin\CategoryController;
 use App\Http\Controllers\admin\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -58,10 +60,38 @@ Route::prefix('products')->group(function () {
     Route::get('/{id}/related', [ProductSearchController::class, 'related']);
 
 
-    Route::middleware('auth:api')->group(function () {
-        Route::post('/', [ProductController::class, 'store']);
-        Route::post('/{id}', [ProductController::class, 'update']);
-        Route::delete('/{id}', [ProductController::class, 'destroy']);
+    Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
+        Route::post('/', [ProductController::class, 'store'])->middleware('permission:products.create');;
+        Route::put('/{id}', [ProductController::class, 'update'])->middleware('permission:products.update');;
+        Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('permission:products.destroy');;
         Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Category Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('categories')->group(function () {
+
+    Route::get('/', [CategoryController::class, 'index']);
+
+    Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
+        //
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| brands Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('brands')->group(function () {
+
+    Route::get('/', [BrandController::class, 'index']);
+
+    Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
+        //
     });
 });
