@@ -2,13 +2,16 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Categorie;
+use App\Models\category;
 
 class CategoryService
 {
 
     public function getAll()
     {
-        return Categorie::all();
+        return Category::query()
+            ->select(['id', 'name'])
+            ->orderBy('name', 'asc')
+            ->get();
     }
 }

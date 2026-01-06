@@ -8,6 +8,9 @@ class BrandService
 {
     public function getAll()
     {
-        return Brand::all();
+        return Brand::query()
+            ->select(['id', 'name'])
+            ->orderBy('name', 'asc')
+            ->get();
     }
 }

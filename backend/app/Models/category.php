@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Product;
 
-class Categorie extends Model
+class category extends Model
 {
     use HasFactory;
     use SoftDeletes;
@@ -23,6 +23,6 @@ class Categorie extends Model
 
     public function products(): HasMany
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(Product::class, 'category_id');
     }
 }

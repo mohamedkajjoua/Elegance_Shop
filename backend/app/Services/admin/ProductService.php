@@ -109,26 +109,27 @@ class ProductService
             'brand',
             'variants',
             'images',
-            'reviews',
 
-        ])->select([
-            'id',
-            'name',
-            'description',
-            'short_description',
-            'price',
-            'discount',
-            'final_price',
-            'category_id',
-            'brand_id',
-            'is_featured',
-            'is_active',
-            'views_count',
-            'sales_count',
-            'shipping',
-            'created_at',
-            'updated_at'
-        ])
+        ])->withCount('reviews')
+            ->withAvg('reviews', 'rating')
+            ->select([
+                'id',
+                'name',
+                'description',
+                'short_description',
+                'price',
+                'discount',
+                'final_price',
+                'category_id',
+                'brand_id',
+                'is_featured',
+                'is_active',
+                'views_count',
+                'sales_count',
+                'shipping',
+                'created_at',
+                'updated_at'
+            ])
             ->latest()
             ->paginate($perPage);
     }

@@ -45,18 +45,8 @@ export const useProductShopStore = defineStore("ProductShop", () => {
     try {
       let res;
 
-      // 1. تعريف المفاتيح التي تعتبر "فلترة"
-      const filterKeys = [
-        "size", // ✅ تأكد أن size موجود هنا
-        "color",
-        "category_id",
-        "brand_id",
-        "min_price",
-        "max_price",
-        // قمت بحذف sort_by لكي لا يعتبر فلتراً دائماً
-      ];
+      const filterKeys = ["size", "color", "category_id", "brand_id", "min_price", "max_price"];
 
-      // 2. فحص هل يوجد أي فلتر مفعل؟
       const hasActiveFilter = filterKeys.some((key) => {
         const value = params[key];
         return value !== undefined && value !== null && value !== "";
