@@ -14,28 +14,50 @@ use App\Models\CartItem;
 
 class ProductVariant extends Model
 {
-      use HasFactory;
-      use SoftDeletes;
-        public function product():BelongsTo
+    use HasFactory;
+    use SoftDeletes;
+
+    protected $fillable = [
+        'product_id',
+        'color',
+        'size',
+        'price',
+        'stock',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'price'     => 'decimal:2',
+        'stock'     => 'integer',
+    ];
+
+
+
+
+
+
+
+
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
 
-    public function orderItems():HasMany
+    public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
-     public function images():HasMany
+    public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class);
     }
 
 
-    public function cartItems():HasMany
+    public function cartItems(): HasMany
     {
         return $this->hasMany(CartItem::class);
     }
-
 }

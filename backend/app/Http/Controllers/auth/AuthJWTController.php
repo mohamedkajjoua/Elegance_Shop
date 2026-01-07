@@ -62,4 +62,27 @@ class AuthJWTController extends Controller
 
         return response()->json($response, 200);
     }
+
+    public function me()
+    {
+        $user = auth('api')->user();
+
+        return response()->json([
+            'success' => true,
+            'user' => $user,
+            'permissions' => $user->getAllPermissions(),
+            'permissions_by_module' => $user->getPermissionsByModule()
+        ]);
+    }
+
+    public function refresh()
+    {
+        return response()->json([
+            'success' => true,
+            'user' => auth('api')->user(),
+            'token' => auth('api')->refresh(), // دالة التجديد من المكتبة
+            'token_type' => 'Bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60
+        ]);
+    }
 }
