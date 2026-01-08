@@ -15,14 +15,14 @@ const wishlistStore = useWishlistStore();
 
 // Store setup
 const productShopStore = useProductShopStore();
-const { product, relatedProducts } = storeToRefs(productShopStore);
+const { product, relatedProducts, isLoading } = storeToRefs(productShopStore);
 
 // --- Functions Definitions --
 
 const loadPageData = async (id: string) => {
+  // ✅ إصلاح: التمرير للأعلى فوراً ليعطي شعوراً بالسرعة
+  window.scrollTo({ top: 0, behavior: "instant" });
   await productShopStore.fetchProductDetails(id);
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 const getColorHex = (colorName: string) => {
@@ -64,7 +64,7 @@ watch(product, (newVal) => {
 });
 
 // --- Computed Properties ---
-
+// ✅ إضافة تحقق (?.) لمنع الأخطاء أثناء التبديل بين المنتجات
 const availableColors = computed(() => {
   if (!product.value || !product.value.variants) return [];
   const distinctColors = [...new Set(product.value.variants.map((v: any) => v.color))];
@@ -246,11 +246,24 @@ function submitReview() {
 </script>
 
 <template>
-  <div v-if="product" class="pb-12">
+  <div v-if="product || isLoading" class="pb-12">
     <Breadcrumb :items="breadcrumbItems" />
 
     <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
+      <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-pulse">
+        <div class="bg-gray-200 rounded-3xl h-[500px]"></div>
+        <div class="space-y-4 py-8">
+          <div class="h-8 bg-gray-200 rounded w-3/4"></div>
+          <div class="h-6 bg-gray-200 rounded w-1/4"></div>
+          <div class="h-32 bg-gray-200 rounded w-full"></div>
+          <div class="flex gap-4">
+            <div class="h-12 bg-gray-200 rounded w-1/3"></div>
+            <div class="h-12 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         <div class="product-gallery">
           <div
             class="main-image-wrapper relative aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-4"
@@ -417,7 +430,9 @@ function submitReview() {
           </div>
         </div>
       </div>
+    </div>
 
+    <div v-if="!isLoading && product">
       <div class="mt-12">
         <div class="tabs flex gap-8 border-b border-border mb-6">
           <button
@@ -556,27 +571,30 @@ function submitReview() {
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="mt-12 bg-white rounded-2xl p-6 sm:p-8">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl sm:text-2xl font-bold">You May Also Like</h2>
-        <router-link to="/" class="text-primary text-sm font-semibold hover:underline">
-          View All <i class="fa-solid fa-arrow-right ml-1"></i>
-        </router-link>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <template v-if="relatedProducts?.length">
-          <ProductCard v-for="p in relatedProducts" :key="p.id" :product="p" />
-        </template>
-        <div v-else class="col-span-full text-center text-gray-400 py-10">
-          No related products found.
+      <div class="mt-12 bg-white rounded-2xl p-6 sm:p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl sm:text-2xl font-bold">You May Also Like</h2>
+          <router-link to="/" class="text-primary text-sm font-semibold hover:underline">
+            View All <i class="fa-solid fa-arrow-right ml-1"></i>
+          </router-link>
+        </div>
+        <div v-if="isLoading" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div v-for="n in 8" :key="n" class="animate-pulse">
+            <div class="bg-gray-200 h-64 rounded-2xl mb-4"></div>
+            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <template v-if="relatedProducts?.length">
+            <ProductCard v-for="p in relatedProducts" :key="p.id" :product="p" />
+          </template>
+          <div v-else class="col-span-full text-center text-gray-400 py-10">
+            No related products found.
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div v-else class="flex justify-center items-center h-[50vh]">
-    <span class="loading loading-spinner loading-lg"></span>
   </div>
 </template>

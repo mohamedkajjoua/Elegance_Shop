@@ -12,6 +12,7 @@ use App\Http\Controllers\admin\SettingController;
 
 
 use App\Http\Controllers\auth\AuthJWTController;
+use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 
 
