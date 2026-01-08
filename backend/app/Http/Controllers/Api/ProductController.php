@@ -10,41 +10,57 @@ use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
-    protected $productService;
+    protected $ProductService;
 
-    public function __construct(ProductService $productService)
+    public function __construct(ProductService $ProductService)
     {
-        $this->productService = $productService;
+        $this->ProductService = $ProductService;
         // Décommenter si vous utilisez l'auth
         // $this->middleware('auth:sanctum'); 
     }
 
     public function index(): JsonResponse
     {
-        $products = $this->productService->getAllProducts();
+        $products = $this->ProductService->getAllProducts();
         return response()->json($products);
     }
 
     public function store(StoreProductRequest $request): JsonResponse
     {
-        $product = $this->productService->createProduct($request->validated());
-        return response()->json(['message' => 'Produit créé', 'data' => $product], 201);
+        try {
+            // On appelle la méthode create du Services
+            $result = $this->ProductService->createProduct($request->validated());
+            
+            return response()->json($result, 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function show(Product $product): JsonResponse
+    public function show($id)
     {
-        return response()->json($product);
+        try {
+            $product = $this->ProductService->getProductById($id);
+            return response()->json($product);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
+        }
+        // return response()->json($product);
     }
 
     public function update(UpdateProductRequest $request, Product $product): JsonResponse
     {
-        $updatedProduct = $this->productService->updateProduct($product, $request->validated());
+        $updatedProduct = $this->ProductService->updateProduct($product, $request->validated());
         return response()->json(['message' => 'Produit mis à jour', 'data' => $updatedProduct]);
     }
 
     public function destroy(Product $product): JsonResponse
     {
-        $this->productService->deleteProduct($product);
+        $this->ProductService->deleteProduct($product);
         return response()->json(['message' => 'Produit supprimé']);
     }
 }

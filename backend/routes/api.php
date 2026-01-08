@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\CategoryController;
-use App\Http\Controllers\admin\ProductController;
+use App\Http\Controllers\admin\Api\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
@@ -13,7 +13,7 @@ use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 
 
-use App\Http\Controllers\Api\Admin\ProductController;
+
 
 
 Route::prefix('admin')->group(function () {

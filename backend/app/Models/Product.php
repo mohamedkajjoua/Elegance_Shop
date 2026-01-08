@@ -19,32 +19,7 @@ class Product extends Model
     use HasFactory;
     use SoftDeletes;
 
-
-    protected $fillable = [
-        'name',
-        'description',
-        'short_description',
-        'price',
-        'discount',
-        'final_price',
-        'category_id',
-        'brand_id',
-        'is_featured',
-        'is_active',
-        'shipping',
-        'views_count',
-        'sales_count',
-    ];
-
-    protected $casts = [
-        'is_featured' => 'boolean',
-        'is_active'   => 'boolean',
-        'price'       => 'decimal:2',
-        'final_price' => 'decimal:2',
-        'shipping'    => 'decimal:2',
-    ];
-
-    public function category(): BelongsTo
+     public function category():BelongsTo
     {
         return $this->belongsTo(category::class);
     }
