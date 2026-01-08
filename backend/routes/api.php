@@ -6,11 +6,15 @@ use App\Http\Controllers\admin\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\admin\SettingController;
+
+
 
 
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -96,18 +100,23 @@ Route::prefix('brands')->group(function () {
         //
     });
 });
+/*|--------------------------------------------------------------------------
+| Settings Routes
+|--------------------------------------------------------------------------*/
 
+ Route::prefix('settings')->group(function () {
 
-/*
-|--------------------------------------------------------------------------
-| home Routes
-|--------------------------------------------------------------------------
-*/
-Route::prefix('home')->group(function () {
+    Route::get('/', [SettingController::class, 'index']);
+        Route::post('/', [SettingController::class, 'store']);
+     Route::get('/{id}', [SettingController::class, 'show']);
+        Route::put('/{id}', [SettingController::class, 'update']);
+        Route::delete('/{id}', [SettingController::class, 'destroy']);
+      
 
-    Route::get('/getCategoryToHome', [HomeController::class, 'getCategoryToHome']);
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
         //
     });
 });
+ 
+
