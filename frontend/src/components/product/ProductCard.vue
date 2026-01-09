@@ -45,45 +45,42 @@ function toggleWishlist(e) {
   wishlistStore.toggleWishlist(props.product);
 }
 
-function quickAddToCart(e) {
-  e.preventDefault();
-  e.stopPropagation();
+// ✅ ADD TO CART (COMPATIBLE BACKEND الحالي)
+function addToCart(e) {
+  e.preventDefault()
+  e.stopPropagation()
 
-  //
-  const firstVariant =
-    props.product.variants && props.product.variants.length > 0 ? props.product.variants[0] : null;
-
-  if (!firstVariant) {
-    alert("Please view product details to select options.");
-    return;
+  //  sécurité
+  if (!props.product.variants || props.product.variants.length === 0) {
+    console.error('Produit sans variants', props.product)
+    alert('Ce produit n’est pas disponible')
+    return
   }
 
-  const cartItem = {
-    product_id: props.product.id,
-    variant_id: firstVariant.id,
-    quantity: 1,
-    name: props.product.name,
-    price: firstVariant.price,
-    image: mainImage.value,
-    color: firstVariant.color,
-    size: firstVariant.size,
-  };
+  const variantId = props.product.variants[0].id
 
-  cartStore.addToCart(cartItem);
+  cartStore.addToCart(variantId, 1)
 
-  const btn = e.currentTarget;
-  const originalContent = btn.innerHTML;
-  btn.innerHTML = '<i class="fa-solid fa-check"></i>';
-  btn.style.background = "#34C759";
-  btn.style.color = "#fff";
+  // feedback UI
+  const btn = e.currentTarget
+  const oldHtml = btn.innerHTML
+
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-check"></i>'
+  btn.classList.remove('bg-[#F0EBFF]', 'text-primary')
+  btn.classList.add('bg-green-500', 'text-white')
 
   setTimeout(() => {
-    btn.innerHTML = originalContent;
-    btn.style.background = "";
-    btn.style.color = "";
-  }, 1000);
+    btn.innerHTML = oldHtml
+    btn.disabled = false
+    btn.classList.remove('bg-green-500', 'text-white')
+    btn.classList.add('bg-[#F0EBFF]', 'text-primary')
+  }, 1000)
 }
 </script>
+
+
+
 
 <template>
   <div
@@ -144,14 +141,20 @@ function quickAddToCart(e) {
           </div>
         </div>
 
-        <button
-          class="add-cart-btn w-9 h-9 flex items-center justify-center bg-[#F0EBFF] text-primary rounded-lg hover:bg-primary hover:text-white transition-all duration-300 shadow-sm"
-          @click="quickAddToCart"
-          :title="product.variants?.length ? 'Quick Add' : 'View Details'"
-        >
-          <i class="fa-solid fa-cart-shopping"></i>
-        </button>
+<button
+  class="add-cart-btn w-9 h-9 flex items-center justify-center
+         bg-[#F0EBFF] text-primary rounded-lg
+         hover:bg-primary hover:text-white transition-colors
+         disabled:opacity-40 disabled:cursor-not-allowed"
+
+  @click="addToCart"
+>
+  <i class="fa-solid fa-cart-shopping"></i>
+</button>
+
+
       </div>
     </div>
   </div>
 </template>
+
