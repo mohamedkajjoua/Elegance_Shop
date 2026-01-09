@@ -8,6 +8,6 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-const cartStore = useCartStore()
-cartStore.fetchCart()
+//const cartStore = useCartStore()
+//cartStore.fetchCart()
 app.mount('#app')
