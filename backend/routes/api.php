@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\CategoryController;
-use App\Http\Controllers\admin\Api\ProductController;
+use App\Http\Controllers\admin\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
@@ -16,15 +16,6 @@ use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 
 
-<<<<<<< HEAD
-
-
-
-Route::prefix('admin')->group(function () {
-    Route::apiResource('products', ProductController::class);
-});
-=======
->>>>>>> 22a62b1868918bc06b54e2624af5453586e004b3
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -113,19 +104,30 @@ Route::prefix('brands')->group(function () {
 | Settings Routes
 |--------------------------------------------------------------------------*/
 
- Route::prefix('settings')->group(function () {
+Route::prefix('settings')->group(function () {
 
     Route::get('/', [SettingController::class, 'index']);
-        Route::post('/', [SettingController::class, 'store']);
-     Route::get('/{id}', [SettingController::class, 'show']);
-        Route::put('/{id}', [SettingController::class, 'update']);
-        Route::delete('/{id}', [SettingController::class, 'destroy']);
-      
+    Route::post('/', [SettingController::class, 'store']);
+    Route::get('/{id}', [SettingController::class, 'show']);
+    Route::put('/{id}', [SettingController::class, 'update']);
+    Route::delete('/{id}', [SettingController::class, 'destroy']);
+
 
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
         //
     });
 });
- 
+/*
+|--------------------------------------------------------------------------
+| home Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('home')->group(function () {
 
+    Route::get('/getCategoryToHome', [HomeController::class, 'getCategoryToHome']);
+
+    Route::middleware(['auth:api',])->group(function () {
+        //
+    });
+});

@@ -10,7 +10,8 @@ class BrandService
     public function getAll()
     {
         return Brand::query()
-            ->select(['id', 'name', 'created_at']) // created_at est utile pour l'admin
+            ->select(['id', 'name'])
+            ->select(['id', 'name', 'created_at'])
             ->orderBy('name', 'asc')
             ->get();
     }
@@ -34,7 +35,7 @@ class BrandService
     public function updateBrand($id, array $data)
     {
         $brand = Brand::findOrFail($id);
-        
+
         $brand->update([
             'name' => $data['name']
         ]);
@@ -47,7 +48,7 @@ class BrandService
     {
         $brand = Brand::findOrFail($id);
         $brand->delete();
-        
+
         return true;
     }
 }
