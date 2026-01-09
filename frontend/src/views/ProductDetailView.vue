@@ -20,7 +20,6 @@ const { product, relatedProducts, isLoading } = storeToRefs(productShopStore);
 // --- Functions Definitions --
 
 const loadPageData = async (id: string) => {
-  // ✅ إصلاح: التمرير للأعلى فوراً ليعطي شعوراً بالسرعة
   window.scrollTo({ top: 0, behavior: "instant" });
   await productShopStore.fetchProductDetails(id);
 };
@@ -64,7 +63,7 @@ watch(product, (newVal) => {
 });
 
 // --- Computed Properties ---
-// ✅ إضافة تحقق (?.) لمنع الأخطاء أثناء التبديل بين المنتجات
+
 const availableColors = computed(() => {
   if (!product.value || !product.value.variants) return [];
   const distinctColors = [...new Set(product.value.variants.map((v: any) => v.color))];
@@ -157,7 +156,7 @@ function toggleWishlist() {
 }
 
 // Reviews Data & Logic
-const reviews = ref([
+var reviews = ref([
   {
     id: 1,
     name: "Sarah M.",

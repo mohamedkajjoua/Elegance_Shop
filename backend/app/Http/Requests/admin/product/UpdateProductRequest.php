@@ -41,6 +41,8 @@ class UpdateProductRequest extends FormRequest
             'variants.*.stock' => 'required_with:variants|integer|min:0',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'deleted_images'   => 'nullable|array',
+            'deleted_images.*' => 'integer',
         ];
     }
 }

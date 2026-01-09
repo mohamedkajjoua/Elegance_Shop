@@ -1,37 +1,57 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import AdminHeader from "@/components/admin/AdminHeader.vue";
 import AdminNav from "@/components/admin/AdminNav.vue";
-import type { IProductPayload } from "@/types/product";
-import { useRouter } from "vue-router";
-
-import { useProductShopStore } from "@/stores/user/ProductShop";
 import { useAdminProductStore } from "@/stores/admin/AdminProductStore";
 
-// Mobile sidebar toggle
-const sidebarOpen = ref(false);
-
-// File input ref
-const fileInput = ref<HTMLInputElement | null>(null);
-const isDragging = ref(false);
+import type { IProduct, IProductPayload, IProductVariant } from "@/types/ProductType";
+import { useAdminCategoryStore } from "@/stores/admin/AdminCategoryStore";
+import { useAdminBrandStore } from "@/stores/admin/AdminBrandStore";
 
 const router = useRouter();
+const route = useRoute();
 const adminStore = useAdminProductStore();
-const shopStore = useProductShopStore();
-const isSubmitting = ref(false);
-const errors = ref<Record<string, string[]>>({});
+const categoryStore = useAdminCategoryStore();
+const bransStore = useAdminBrandStore();
 
-// واجهة النموذج المحدثة (تدعم الأسطر اليدوية للمتغيرات)
-interface IUiForm extends Omit<IProductPayload, "images"> {
-  images: { file: File; preview: string; name: string }[];
-  variants: { size: string; color: string; stock: number; price?: number }[];
+const sidebarOpen = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
+const isDragging = ref(false);
+const isSubmitting = ref(false);
+const isLoadingData = ref(false);
+const errors = ref<Record<string, string[]>>({});
+const deletedImageIds = ref<number[]>([]);
+
+const productId = computed(() => Number(route.params.id));
+
+interface IUiImage {
+  id?: number;
+  file?: File;
+  preview: string;
+  isExisting: boolean;
+  is_primary: boolean;
 }
 
-// Form data
+interface IUiForm {
+  name: string;
+  description: string;
+  short_description: string;
+  price: number;
+  discount: number;
+  shipping: number;
+  category_id: number;
+  brand_id: number;
+  is_featured: boolean;
+  is_active: boolean;
+  images: IUiImage[];
+  variants: IProductVariant[];
+}
+
 const form = reactive<IUiForm>({
   name: "",
   description: "",
-  short_description: "", // ✅ تمت إعادته
+  short_description: "",
   price: 0,
   discount: 0,
   shipping: 0,
@@ -40,12 +60,72 @@ const form = reactive<IUiForm>({
   is_featured: false,
   is_active: true,
   images: [],
-  // نبدأ بسطر واحد فارغ
-  variants: [{ size: "", color: "", stock: 10 }],
+  variants: [],
 });
 
 onMounted(async () => {
-  if (shopStore.categories.length === 0) await shopStore.fetchFilterAttributes();
+  isLoadingData.value = true;
+  try {
+    categoryStore.fetchCategory();
+    bransStore.fetchBrand();
+
+    if (productId.value) {
+      await loadProductData(productId.value);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  } finally {
+    isLoadingData.value = false;
+  }
+});
+
+const loadProductData = async (id: number) => {
+  const response: any = await adminStore.fetchProductById(id);
+  const product: IProduct = response.data || response;
+
+  if (!product) return;
+
+  form.name = product.name;
+  form.description = product.description;
+  form.short_description = product.short_description;
+  form.price = Number(product.price);
+  form.discount = Number(product.discount);
+
+  form.shipping = Number(product.shipping) || 0;
+
+  form.category_id = Number(product.category?.id || product.category_id || 0);
+  form.brand_id = Number(product.brand_id || product.brand?.id || 0);
+
+  form.is_featured = Boolean(product.is_featured);
+  form.is_active = Boolean(product.is_active);
+
+  if (product.variants && product.variants.length > 0) {
+    form.variants = product.variants.map((v) => ({
+      id: v.id,
+      color: v.color,
+      size: v.size,
+      price: Number(v.price),
+      stock: Number(v.stock),
+    }));
+  } else {
+    addVariantRow();
+  }
+
+  if (product.images && product.images.length > 0) {
+    const baseUrl = "http://127.0.0.1:8000/storage/";
+    form.images = product.images.map((img) => ({
+      id: img.id,
+      preview: img.url.startsWith("http") ? img.url : `${baseUrl}${img.url.replace(/^\//, "")}`,
+      isExisting: true,
+      is_primary: img.is_primary,
+    }));
+  }
+};
+
+const calculatedFinalPrice = computed(() => {
+  const price = Number(form.price) || 0;
+  const discount = Number(form.discount) || 0;
+  return (price - (price * discount) / 100).toFixed(2);
 });
 
 const availableSizes = ["XS", "S", "M", "L", "XL", "XXL", "2XL", "3XL"];
@@ -62,20 +142,13 @@ const availableColors = [
   "Gray",
 ];
 
-const calculatedFinalPrice = computed(() => {
-  if (!form.price || form.price <= 0) return "0.00";
-  const discountAmount = (form.price * (form.discount || 0)) / 100;
-  const finalPrice = form.price - discountAmount;
-  return finalPrice.toFixed(2);
-});
-
-// ========== VARIANT FUNCTIONS (الجديد: إضافة وحذف أسطر) ==========
-
 const addVariantRow = () => {
   form.variants.push({
+    id: 0,
     size: "",
     color: "",
     stock: 10,
+    price: form.price,
   });
 };
 
@@ -83,15 +156,35 @@ const removeVariantRow = (index: number) => {
   form.variants.splice(index, 1);
 };
 
-// ========== IMAGE UPLOAD FUNCTIONS (تصميمك القديم) ==========
-const triggerFileInput = () => {
-  if (fileInput.value) fileInput.value.click();
+const processFiles = (files: FileList) => {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (form.images.length >= 4) break;
+
+    const preview = URL.createObjectURL(file);
+    form.images.push({
+      file: file,
+      preview: preview,
+      isExisting: false,
+      is_primary: form.images.length === 0,
+    });
+  }
 };
 
-const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const files = target.files;
-  if (files) processFiles(files);
+const removeImage = (index: number) => {
+  const img = form.images[index];
+  if (img.isExisting && img.id) {
+    deletedImageIds.value.push(img.id);
+  } else if (img.preview) {
+    URL.revokeObjectURL(img.preview);
+  }
+  form.images.splice(index, 1);
+};
+
+const triggerFileInput = () => fileInput.value?.click();
+const handleFileSelect = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (target.files) processFiles(target.files);
   target.value = "";
 };
 
@@ -101,104 +194,49 @@ const handleDrop = (event: DragEvent) => {
   if (files) processFiles(files);
 };
 
-const processFiles = (files: FileList) => {
-  const maxFiles = 4;
-  const maxSize = 5 * 1024 * 1024; // 5MB
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-  for (let i = 0; i < files.length; i++) {
-    if (form.images.length >= maxFiles) {
-      alert(`Maximum ${maxFiles} images allowed`);
-      break;
-    }
-    const file = files[i];
-    if (!allowedTypes.includes(file.type)) {
-      alert(`${file.name} is not a valid image type.`);
-      continue;
-    }
-    if (file.size > maxSize) {
-      alert(`${file.name} is too large.`);
-      continue;
-    }
-    const preview = URL.createObjectURL(file);
-    form.images.push({ file: file, preview: preview, name: file.name });
-  }
-};
-
-const removeImage = (index: number) => {
-  if (form.images[index].preview) {
-    URL.revokeObjectURL(form.images[index].preview);
-  }
-  form.images.splice(index, 1);
-};
-
-// ========== FORM FUNCTIONS ==========
-
+// --- send data ---
 const submitForm = async () => {
   errors.value = {};
-
-  if (!form.name || !form.price || !form.category_id) {
-    alert("Please fill in all required fields (Name, Price, Category)");
-    return;
-  }
-
-  // التحقق من المتغيرات
-  const invalidVariants = form.variants.filter((v) => !v.size || !v.color);
-  if (invalidVariants.length > 0) {
-    alert("Please select Size and Color for all variant rows.");
-    return;
-  }
-
   isSubmitting.value = true;
-  try {
-    const imagesToUpload = form.images.map((img) => img.file);
 
-    // تجهيز المتغيرات مع السعر
-    const finalVariants = form.variants.map((v) => ({
-      size: v.size,
-      color: v.color,
-      stock: v.stock,
-      price: form.price, // أو يمكنك إضافة حقل سعر خاص لكل متغير إذا أردت
-    }));
+  try {
+    const newImages = form.images
+      .filter((img) => !img.isExisting && img.file)
+      .map((img) => img.file as File);
 
     const payload: any = {
-      ...form,
-      images: imagesToUpload,
-      category_id: form.category_id === 0 ? null : form.category_id,
-      brand_id: form.brand_id === 0 ? null : form.brand_id,
-      variants: finalVariants, // إرسال المصفوفة اليدوية
+      name: form.name,
+      description: form.description,
+      short_description: form.short_description,
+      price: form.price,
+      discount: form.discount,
+      shipping: form.shipping,
+      category_id: form.category_id,
+      brand_id: form.brand_id,
+      is_featured: form.is_featured ? 1 : 0,
+      is_active: form.is_active ? 1 : 0,
+      variants: form.variants,
+
+      _method: "PUT",
+      deleted_images: deletedImageIds.value,
+      images: newImages,
     };
 
-    await adminStore.createProduct(payload);
+    await adminStore.updateProduct(productId.value, payload);
 
-    alert("Product Created Successfully");
-    resetForm();
+    alert("Product Updated Successfully!");
     router.push("/admin/products");
   } catch (err: any) {
     console.error(err);
-    if (err.response && err.response.status === 422) {
+    if (err.response?.status === 422) {
       errors.value = err.response.data.errors;
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      alert("Failed to create product");
+      alert("Failed to update product.");
     }
   } finally {
     isSubmitting.value = false;
   }
-};
-
-const resetForm = () => {
-  form.images.forEach((img) => URL.revokeObjectURL(img.preview));
-  form.category_id = 0;
-  form.brand_id = 0;
-  form.name = "";
-  form.short_description = "";
-  form.description = "";
-  form.price = 0;
-  form.discount = 0;
-  form.shipping = 0;
-  form.images = [];
-  form.variants = [{ size: "", color: "", stock: 10 }];
 };
 </script>
 
@@ -207,7 +245,7 @@ const resetForm = () => {
     <AdminNav :isOpen="sidebarOpen" @close="sidebarOpen = false" />
 
     <div class="flex-1 lg:ml-64">
-      <AdminHeader title="CREATE PRODUCT" @toggle-sidebar="sidebarOpen = true">
+      <AdminHeader title="EDIT PRODUCT" @toggle-sidebar="sidebarOpen = true">
         <div class="relative hidden md:block">
           <input
             type="text"
@@ -219,116 +257,85 @@ const resetForm = () => {
       </AdminHeader>
 
       <main class="p-4 md:p-6">
-        <form @submit.prevent="submitForm">
+        <div v-if="isLoadingData" class="flex justify-center py-20">
+          <i class="fa-solid fa-spinner fa-spin text-4xl text-orange-500"></i>
+        </div>
+
+        <form v-else @submit.prevent="submitForm">
           <div class="flex items-center gap-2 text-sm text-slate-500 mb-6">
-            <a href="#" class="hover:text-orange-500">Products</a>
+            <router-link to="/admin/products" class="hover:text-orange-500">Products</router-link>
             <i class="fa-solid fa-chevron-right text-xs"></i>
-            <span class="text-slate-800 font-medium">Create Product</span>
+            <span class="text-slate-800 font-medium">Edit Product</span>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <div class="lg:col-span-2 space-y-4 md:space-y-6">
               <div class="bg-white rounded-xl p-4 md:p-6 shadow-sm">
                 <h3 class="text-lg font-semibold text-slate-800 mb-4">Basic Information</h3>
-                <div class="space-y-4">
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label class="block text-sm font-medium text-slate-700 mb-2"
-                        >Category <span class="text-red-500">*</span></label
-                      >
-                      <select
-                        v-model="form.category_id"
-                        :class="[
-                          'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2',
-                          errors.category_id
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-200 focus:ring-orange-500',
-                        ]"
-                      >
-                        <option :value="0">Select Category</option>
-                        <option v-for="cat in shopStore.categories" :key="cat.id" :value="cat.id">
-                          {{ cat.name }}
-                        </option>
-                      </select>
-                      <p v-if="errors.category_id" class="text-red-500 text-xs mt-1">
-                        {{ errors.category_id[0] }}
-                      </p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-slate-700 mb-2">Brand</label>
-                      <select
-                        v-model="form.brand_id"
-                        class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      >
-                        <option :value="0">Select Brand</option>
-                        <option v-for="brand in shopStore.brands" :key="brand.id" :value="brand.id">
-                          {{ brand.name }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
 
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label class="block text-sm font-medium text-slate-700 mb-2"
-                      >Product Name <span class="text-red-500">*</span></label
+                      >Category <span class="text-red-500">*</span></label
                     >
-                    <input
-                      v-model="form.name"
-                      type="text"
-                      placeholder="Enter product name"
-                      :class="[
-                        'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2',
-                        errors.name
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-200 focus:ring-orange-500',
-                      ]"
-                    />
-                    <p v-if="errors.name" class="text-red-500 text-xs mt-1">{{ errors.name[0] }}</p>
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2"
-                      >Short Description</label
+                    <select
+                      v-model="form.category_id"
+                      class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
-                    <input
-                      v-model="form.short_description"
-                      type="text"
-                      placeholder="Brief summary..."
-                      maxlength="150"
-                      :class="[
-                        'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2',
-                        errors.short_description
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-200 focus:ring-orange-500',
-                      ]"
-                    />
-                    <p class="text-xs text-slate-400 mt-1">
-                      {{ form.short_description?.length || 0 }}/150 characters
-                    </p>
-                    <p v-if="errors.short_description" class="text-red-500 text-xs mt-1">
-                      {{ errors.short_description[0] }}
+                      <option :value="0">Select Category</option>
+                      <option v-for="c in categoryStore.categories" :key="c.id" :value="c.id">
+                        {{ c.name }}
+                      </option>
+                    </select>
+                    <p v-if="errors.category_id" class="text-red-500 text-xs mt-1">
+                      {{ errors.category_id[0] }}
                     </p>
                   </div>
 
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2"
-                      >Description <span class="text-red-500">*</span></label
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Brand</label>
+                    <select
+                      v-model="form.brand_id"
+                      class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
-                    <textarea
-                      v-model="form.description"
-                      rows="5"
-                      placeholder="Enter detailed product description"
-                      :class="[
-                        'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none',
-                        errors.description
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-200 focus:ring-orange-500',
-                      ]"
-                    ></textarea>
-                    <p v-if="errors.description" class="text-red-500 text-xs mt-1">
-                      {{ errors.description[0] }}
-                    </p>
+                      <option :value="0">Select Brand</option>
+                      <option v-for="b in bransStore.brands" :key="b.id" :value="b.id">
+                        {{ b.name }}
+                      </option>
+                    </select>
                   </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-slate-700 mb-2"
+                    >Product Name <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="text"
+                    v-model="form.name"
+                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <p v-if="errors.name" class="text-red-500 text-xs mt-1">{{ errors.name[0] }}</p>
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-slate-700 mb-2"
+                    >Short Description</label
+                  >
+                  <input
+                    type="text"
+                    v-model="form.short_description"
+                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                  <textarea
+                    v-model="form.description"
+                    rows="5"
+                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                  ></textarea>
                 </div>
               </div>
 
@@ -342,22 +349,11 @@ const resetForm = () => {
                     <div class="relative">
                       <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                       <input
-                        v-model="form.price"
                         type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        :class="[
-                          'w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2',
-                          errors.price
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-200 focus:ring-orange-500',
-                        ]"
+                        v-model="form.price"
+                        class="w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
-                    <p v-if="errors.price" class="text-red-500 text-xs mt-1">
-                      {{ errors.price[0] }}
-                    </p>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-slate-700 mb-2"
@@ -365,12 +361,9 @@ const resetForm = () => {
                     >
                     <div class="relative">
                       <input
-                        v-model="form.discount"
                         type="number"
-                        min="0"
-                        max="100"
-                        placeholder="0"
-                        class="w-full px-4 pr-8 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        v-model="form.discount"
+                        class="w-full px-4 pr-8 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                       <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
                         >%</span
@@ -382,10 +375,10 @@ const resetForm = () => {
                     <div class="relative">
                       <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                       <input
-                        :value="calculatedFinalPrice"
                         type="text"
+                        :value="calculatedFinalPrice"
                         readonly
-                        class="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-slate-600 cursor-not-allowed"
+                        class="w-full pl-8 pr-4 py-3 border bg-gray-50 rounded-lg text-slate-600 cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -395,12 +388,9 @@ const resetForm = () => {
                   <div class="relative">
                     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                     <input
-                      v-model="form.shipping"
                       type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      class="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      v-model="form.shipping"
+                      class="w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
@@ -423,8 +413,9 @@ const resetForm = () => {
                 >
                   <div class="col-span-3">Size</div>
                   <div class="col-span-3">Color</div>
-                  <div class="col-span-3">Stock</div>
-                  <div class="col-span-1 text-center"></div>
+                  <div class="col-span-2">Stock</div>
+                  <div class="col-span-1">Price</div>
+                  <div class="col-span-1"></div>
                 </div>
 
                 <div class="space-y-3">
@@ -439,31 +430,24 @@ const resetForm = () => {
                         class="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-orange-500 bg-white"
                       >
                         <option value="" disabled>Size</option>
-                        <option v-for="size in availableSizes" :key="size" :value="size">
-                          {{ size }}
-                        </option>
+                        <option v-for="s in availableSizes" :key="s" :value="s">{{ s }}</option>
                       </select>
                     </div>
-
                     <div class="col-span-3">
                       <select
                         v-model="variant.color"
                         class="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-orange-500 bg-white"
                       >
                         <option value="" disabled>Color</option>
-                        <option v-for="color in availableColors" :key="color" :value="color">
-                          {{ color }}
-                        </option>
+                        <option v-for="c in availableColors" :key="c" :value="c">{{ c }}</option>
                       </select>
                     </div>
-
-                    <div class="col-span-3">
+                    <div class="col-span-2">
                       <input
                         type="number"
                         v-model="variant.stock"
-                        min="0"
-                        class="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-orange-500"
                         placeholder="Qty"
+                        class="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-orange-500"
                       />
                     </div>
 
@@ -471,22 +455,13 @@ const resetForm = () => {
                       <button
                         type="button"
                         @click="removeVariantRow(index)"
-                        class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors"
-                        title="Remove Variant"
+                        class="text-red-500 hover:text-red-700 p-2"
                         :disabled="form.variants.length === 1"
-                        :class="{ 'opacity-50 cursor-not-allowed': form.variants.length === 1 }"
                       >
                         <i class="fa-solid fa-trash-can"></i>
                       </button>
                     </div>
                   </div>
-                </div>
-
-                <div
-                  v-if="form.variants.length === 0"
-                  class="text-center py-4 text-gray-500 text-sm"
-                >
-                  Click "Add Option" to add variant.
                 </div>
               </div>
             </div>
@@ -500,10 +475,10 @@ const resetForm = () => {
                 <input
                   ref="fileInput"
                   type="file"
-                  accept="image/*"
                   multiple
-                  @change="handleFileSelect"
                   class="hidden"
+                  @change="handleFileSelect"
+                  accept="image/*"
                 />
 
                 <div
@@ -527,32 +502,30 @@ const resetForm = () => {
                   <p class="text-sm text-slate-600 mb-1">Drag & drop your image here</p>
                   <p class="text-xs text-slate-400 mt-2">PNG, JPG, WEBP up to 5MB</p>
                 </div>
-                <p v-if="errors.images" class="text-red-500 text-xs text-center mb-2">
-                  {{ errors.images[0] }}
-                </p>
 
                 <div class="grid grid-cols-4 gap-2">
                   <div
-                    v-for="(image, index) in form.images"
-                    :key="index"
+                    v-for="(img, idx) in form.images"
+                    :key="idx"
                     class="aspect-square rounded-lg bg-gray-100 relative overflow-hidden group"
                   >
-                    <img
-                      :src="image.preview"
-                      :alt="'Image ' + (index + 1)"
-                      class="w-full h-full object-cover"
-                    />
+                    <img :src="img.preview" class="w-full h-full object-cover" />
                     <button
                       type="button"
-                      @click="removeImage(index)"
+                      @click="removeImage(idx)"
                       class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <i class="fa-solid fa-times"></i>
                     </button>
                     <span
-                      v-if="index === 0"
+                      v-if="idx === 0"
                       class="absolute bottom-1 left-1 px-1.5 py-0.5 bg-orange-500 text-white text-xs rounded"
                       >Main</span
+                    >
+                    <span
+                      v-if="img.isExisting"
+                      class="absolute top-1 left-1 px-1.5 py-0.5 bg-blue-500 text-white text-[10px] rounded"
+                      >Old</span
                     >
                   </div>
 
@@ -565,9 +538,6 @@ const resetForm = () => {
                     <i class="fa-solid fa-plus"></i>
                   </div>
                 </div>
-                <p class="text-xs text-slate-400 mt-2 text-center">
-                  {{ form.images.length }}/4 images uploaded
-                </p>
               </div>
 
               <div class="bg-white rounded-xl p-4 md:p-6 shadow-sm">
@@ -620,43 +590,25 @@ const resetForm = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div
-            class="fixed md:static bottom-0 left-0 right-0 bg-white md:bg-transparent border-t md:border-0 border-gray-200 p-4 md:p-0 md:mt-6 z-20"
-          >
-            <div
-              class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3"
-            >
-              <button
-                type="button"
-                @click="router.push('/admin/products')"
-                class="order-3 sm:order-1 px-4 sm:px-6 py-3 border border-gray-200 rounded-lg font-medium text-slate-600 hover:bg-gray-50 text-sm sm:text-base text-center"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                @click="
-                  form.is_active = false;
-                  submitForm();
-                "
-                class="order-2 px-4 sm:px-6 py-3 border border-gray-200 rounded-lg font-medium text-slate-600 hover:bg-gray-50 text-sm sm:text-base"
-              >
-                Save as Draft
-              </button>
-              <button
-                type="submit"
-                :disabled="isSubmitting"
-                class="order-1 sm:order-3 px-4 sm:px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 text-sm sm:text-base flex items-center justify-center gap-2"
-              >
-                <i v-if="isSubmitting" class="fa-solid fa-circle-notch fa-spin"></i>
-                <span v-else><i class="fa-solid fa-plus mr-2"></i>Create Product</span>
-              </button>
+              <div class="flex flex-col gap-2">
+                <button
+                  type="submit"
+                  :disabled="isSubmitting"
+                  class="w-full py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {{ isSubmitting ? "Updating..." : "Update Product" }}
+                </button>
+                <button
+                  type="button"
+                  @click="router.push('/admin/products')"
+                  class="w-full py-3 border border-gray-200 text-slate-600 rounded-lg font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-          <div class="h-36 md:hidden"></div>
         </form>
       </main>
     </div>

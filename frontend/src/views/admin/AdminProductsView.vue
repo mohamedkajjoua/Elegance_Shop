@@ -1,60 +1,200 @@
-<script setup>
-import { ref } from 'vue'
-import AdminHeader from '@/components/admin/AdminHeader.vue'
-import AdminNav from '@/components/admin/AdminNav.vue'
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
+import AdminHeader from "@/components/admin/AdminHeader.vue";
+import AdminNav from "@/components/admin/AdminNav.vue";
+import { useAdminProductStore } from "@/stores/admin/AdminProductStore";
+import { storeToRefs } from "pinia";
+import { useRoute, useRouter } from "vue-router";
 
-const sidebarOpen = ref(false)
+const sidebarOpen = ref(false);
+const route = useRoute();
+const router = useRouter();
+
+const productStore = useAdminProductStore();
+const { meta, isLoading } = storeToRefs(productStore);
+
+onMounted(() => {
+  const page = route.query.page ? Number(route.query.page) : 1;
+  productStore.fetchAllProduct({ page });
+});
+
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = newPage ? Number(newPage) : 1;
+    productStore.fetchAllProduct({ page });
+  }
+);
+
+// --- Helpers ---
+const formatSizes = (variants: any[]) => {
+  if (!variants || variants.length === 0) return "No sizes";
+  const sizes = variants.map((v) => v.size);
+  const uniqueSizes = [...new Set(sizes)];
+  return uniqueSizes.join(", ");
+};
+
+const calculateTotalStock = (variants: any[]) => {
+  if (!variants || variants.length === 0) return 0;
+  return variants.reduce((total, variant) => total + Number(variant.stock), 0);
+};
+
+const BASE_URL = "http://127.0.0.1:8000";
+const getProductImage = (product: any) => {
+  if (product.images && product.images.length > 0) {
+    const primary = product.images.find((img: any) => img.is_primary);
+    const imagePath = primary ? primary.image_url : product.images[0].image_url;
+    return `${BASE_URL}/storage/${imagePath}`;
+  }
+  return "/images/placeholder.jpg";
+};
+
+// --- Pagination Logic
+
+const displayedPages = computed(() => {
+  const current = meta.value.current_page;
+  const last = meta.value.last_page;
+  const delta = 1;
+  const range = [];
+  const rangeWithDots: (number | string)[] = [];
+  let l;
+
+  range.push(1);
+  for (let i = current - delta; i <= current + delta; i++) {
+    if (i < last && i > 1) {
+      range.push(i);
+    }
+  }
+  range.push(last);
+
+  for (let i of range) {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1);
+      } else if (i - l !== 1) {
+        rangeWithDots.push("...");
+      }
+    }
+    rangeWithDots.push(i);
+    l = i;
+  }
+  return rangeWithDots;
+});
+
+const changePage = (page: number) => {
+  if (page < 1 || page > meta.value.last_page || page === meta.value.current_page) {
+    return;
+  }
+  router.push({
+    query: { ...route.query, page: page },
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+//delete product
+const handleDelete = async (id: number) => {
+  if (confirm("Are you sure?")) {
+    await productStore.deleteProduct(id);
+  }
+};
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100 flex">
-    <!-- Sidebar -->
     <AdminNav :isOpen="sidebarOpen" @close="sidebarOpen = false" />
 
-    <!-- Main Content -->
     <div class="flex-1 lg:ml-64">
-      <!-- Header -->
-      <!-- Header -->
       <AdminHeader title="PRODUCT LIST" @toggle-sidebar="sidebarOpen = true">
         <div class="relative hidden md:block">
-          <input type="text" placeholder="Search..." class="w-32 lg:w-48 pl-10 pr-4 py-2 bg-gray-100 rounded-lg text-sm">
+          <input
+            type="text"
+            placeholder="Search..."
+            class="w-32 lg:w-48 pl-10 pr-4 py-2 bg-gray-100 rounded-lg text-sm"
+          />
           <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
         </div>
       </AdminHeader>
 
-      <!-- Page Content -->
       <main class="p-4 md:p-6">
-        <!-- Content Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h2 class="text-lg md:text-xl font-semibold text-slate-800">All Product List</h2>
           <div class="flex items-center gap-2 md:gap-3">
-            <router-link to="/admin/products/create" class="px-3 md:px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm md:text-base">
-              <i class="fa-solid fa-plus mr-1 md:mr-2"></i> <span class="hidden sm:inline">Add</span> Product
+            <router-link
+              to="/admin/products/create"
+              class="px-3 md:px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm md:text-base"
+            >
+              <i class="fa-solid fa-plus mr-1 md:mr-2"></i>
+              <span class="hidden sm:inline">Add</span> Product
             </router-link>
-            <select class="px-2 md:px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
-              <option>This Month</option>
-              <option>Last Month</option>
-              <option>This Year</option>
-            </select>
           </div>
         </div>
 
-        <!-- Mobile Product Cards (visible only on mobile) -->
-        <div class="md:hidden space-y-3">
-          <!-- Product Card 1 -->
-          <div class="bg-white rounded-xl shadow-sm p-4">
+        <div v-if="productStore.isLoading" class="block md:hidden space-y-4">
+          <div
+            v-for="n in 5"
+            :key="n"
+            class="bg-white p-4 rounded-xl shadow-sm animate-pulse border border-gray-100"
+          >
+            <div class="flex items-center gap-4 mb-4">
+              <div class="h-16 w-16 bg-gray-200 rounded-lg shrink-0"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div class="space-y-1">
+                <div class="h-3 bg-gray-200 rounded w-10"></div>
+                <div class="h-4 bg-gray-200 rounded w-16"></div>
+              </div>
+              <div class="space-y-1">
+                <div class="h-3 bg-gray-200 rounded w-10"></div>
+                <div class="h-4 bg-gray-200 rounded w-16"></div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-4 border-t border-gray-50">
+              <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+              <div class="flex gap-2">
+                <div class="h-8 w-8 bg-gray-200 rounded-lg"></div>
+                <div class="h-8 w-8 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="md:hidden space-y-3">
+          <div
+            v-for="product in productStore.products"
+            :key="product.id"
+            class="bg-white rounded-xl shadow-sm p-4"
+          >
             <div class="flex gap-3">
-              <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=100" alt="Product" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
+              <img
+                :src="getProductImage(product)"
+                :alt="product.name"
+                class="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+              />
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-2">
                   <div>
-                    <h3 class="font-semibold text-slate-800 text-sm">Black T-shirt</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Size: S, M, L, XL</p>
+                    <h3 class="font-semibold text-slate-800 text-sm">{{ product.name }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                      Size: {{ formatSizes(product.variants) }}
+                    </p>
                   </div>
-                  <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-medium rounded-full">Fashion</span>
+                  <span
+                    class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-medium rounded-full"
+                  >
+                    {{ product.category?.name }}
+                  </span>
                 </div>
                 <div class="flex items-center justify-between mt-2">
-                  <span class="text-lg font-bold text-orange-500">$80.00</span>
+                  <span class="text-lg font-bold text-orange-500">
+                    ${{ Number(product.final_price).toFixed(2) }}
+                  </span>
+                  <span v-if="product.discount > 0" class="text-sm text-gray-400 line-through">
+                    ${{ Number(product.price).toFixed(2) }}
+                  </span>
                   <div class="flex items-center gap-1 text-amber-500">
                     <i class="fa-solid fa-star text-xs"></i>
                     <span class="text-sm font-medium">4.5</span>
@@ -62,467 +202,314 @@ const sidebarOpen = ref(false)
                 </div>
                 <div class="flex items-center justify-between mt-2 text-xs">
                   <div class="flex gap-3">
-                    <span class="text-slate-600"><span class="font-medium text-slate-800">486</span> Left</span>
-                    <span class="text-green-600"><span class="font-medium">155</span> Sold</span>
+                    <span class="text-slate-600">
+                      <span class="font-medium text-slate-800">
+                        {{ calculateTotalStock(product.variants) }}
+                      </span>
+                      Left
+                    </span>
+                    <span class="text-green-600">
+                      <span class="font-medium">{{ product.sales_count || 0 }}</span> Sold
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
             <div class="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-              <router-link to="/admin/products/1" class="flex-1 py-2 px-3 rounded-lg border border-gray-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-gray-50 text-sm">
+              <router-link
+                :to="`/admin/products/${product.id}`"
+                class="flex-1 py-2 px-3 rounded-lg border border-gray-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-gray-50 text-sm"
+              >
                 <i class="fa-solid fa-eye"></i> View
               </router-link>
-              <button class="flex-1 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-100 text-sm">
-                <i class="fa-solid fa-pen"></i> Edit
-              </button>
-              <button class="py-2 px-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100">
-                <i class="fa-solid fa-trash text-sm"></i>
+
+              <router-link
+                class="flex-1 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-100 text-sm"
+                :to="`/admin/products/edit/${product.id}`"
+                ><i class="fa-solid fa-pen"></i> Edit</router-link
+              >
+
+              <button
+                class="py-2 px-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100"
+              >
+                <i @click="handleDelete(product.id)" class="fa-solid fa-trash text-sm"></i>
               </button>
             </div>
           </div>
 
-          <!-- Product Card 2 -->
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex gap-3">
-              <img src="https://images.unsplash.com/photo-1551028719-00167b16eac5?w=100" alt="Product" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 class="font-semibold text-slate-800 text-sm">Olive Green Leather Bag</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Size: S, M</p>
-                  </div>
-                  <span class="px-2 py-1 bg-purple-100 text-purple-600 text-xs font-medium rounded-full">Hand Bag</span>
-                </div>
-                <div class="flex items-center justify-between mt-2">
-                  <span class="text-lg font-bold text-orange-500">$136.00</span>
-                  <div class="flex items-center gap-1 text-amber-500">
-                    <i class="fa-solid fa-star text-xs"></i>
-                    <span class="text-sm font-medium">4.1</span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between mt-2 text-xs">
-                  <div class="flex gap-3">
-                    <span class="text-slate-600"><span class="font-medium text-slate-800">784</span> Left</span>
-                    <span class="text-green-600"><span class="font-medium">674</span> Sold</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-              <button class="flex-1 py-2 px-3 rounded-lg border border-gray-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-gray-50 text-sm">
-                <i class="fa-solid fa-eye"></i> View
-              </button>
-              <button class="flex-1 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-100 text-sm">
-                <i class="fa-solid fa-pen"></i> Edit
-              </button>
-              <button class="py-2 px-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100">
-                <i class="fa-solid fa-trash text-sm"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Product Card 3 -->
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex gap-3">
-              <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100" alt="Product" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 class="font-semibold text-slate-800 text-sm">Women Golden Dress</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Size: S, M</p>
-                  </div>
-                  <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-medium rounded-full">Fashion</span>
-                </div>
-                <div class="flex items-center justify-between mt-2">
-                  <span class="text-lg font-bold text-orange-500">$219.00</span>
-                  <div class="flex items-center gap-1 text-amber-500">
-                    <i class="fa-solid fa-star text-xs"></i>
-                    <span class="text-sm font-medium">4.4</span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between mt-2 text-xs">
-                  <div class="flex gap-3">
-                    <span class="text-slate-600"><span class="font-medium text-slate-800">769</span> Left</span>
-                    <span class="text-green-600"><span class="font-medium">100</span> Sold</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-              <button class="flex-1 py-2 px-3 rounded-lg border border-gray-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-gray-50 text-sm">
-                <i class="fa-solid fa-eye"></i> View
-              </button>
-              <button class="flex-1 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-100 text-sm">
-                <i class="fa-solid fa-pen"></i> Edit
-              </button>
-              <button class="py-2 px-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100">
-                <i class="fa-solid fa-trash text-sm"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Product Card 4 -->
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex gap-3">
-              <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100" alt="Product" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 class="font-semibold text-slate-800 text-sm">Gray Cap For Men</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Size: S, M, L</p>
-                  </div>
-                  <span class="px-2 py-1 bg-green-100 text-green-600 text-xs font-medium rounded-full">Cap</span>
-                </div>
-                <div class="flex items-center justify-between mt-2">
-                  <span class="text-lg font-bold text-orange-500">$76.00</span>
-                  <div class="flex items-center gap-1 text-amber-500">
-                    <i class="fa-solid fa-star text-xs"></i>
-                    <span class="text-sm font-medium">4.2</span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between mt-2 text-xs">
-                  <div class="flex gap-3">
-                    <span class="text-slate-600"><span class="font-medium text-slate-800">571</span> Left</span>
-                    <span class="text-green-600"><span class="font-medium">87</span> Sold</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-              <button class="flex-1 py-2 px-3 rounded-lg border border-gray-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-gray-50 text-sm">
-                <i class="fa-solid fa-eye"></i> View
-              </button>
-              <button class="flex-1 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-100 text-sm">
-                <i class="fa-solid fa-pen"></i> Edit
-              </button>
-              <button class="py-2 px-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100">
-                <i class="fa-solid fa-trash text-sm"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Product Card 5 -->
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex gap-3">
-              <img src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=100" alt="Product" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 class="font-semibold text-slate-800 text-sm">Dark Green Cargo Pant</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Size: S, M, L, XL</p>
-                  </div>
-                  <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-medium rounded-full">Fashion</span>
-                </div>
-                <div class="flex items-center justify-between mt-2">
-                  <span class="text-lg font-bold text-orange-500">$110.00</span>
-                  <div class="flex items-center gap-1 text-amber-500">
-                    <i class="fa-solid fa-star text-xs"></i>
-                    <span class="text-sm font-medium">4.4</span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between mt-2 text-xs">
-                  <div class="flex gap-3">
-                    <span class="text-slate-600"><span class="font-medium text-slate-800">241</span> Left</span>
-                    <span class="text-green-600"><span class="font-medium">342</span> Sold</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-              <button class="flex-1 py-2 px-3 rounded-lg border border-gray-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-gray-50 text-sm">
-                <i class="fa-solid fa-eye"></i> View
-              </button>
-              <button class="flex-1 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-100 text-sm">
-                <i class="fa-solid fa-pen"></i> Edit
-              </button>
-              <button class="py-2 px-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100">
-                <i class="fa-solid fa-trash text-sm"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Mobile Pagination -->
-          <div class="bg-white rounded-xl shadow-sm p-4 flex flex-col items-center gap-3">
-            <p class="text-sm text-slate-500">Showing 1 to 5 of 50 entries</p>
+          <div
+            v-if="meta.total > 0"
+            class="bg-white rounded-xl shadow-sm p-4 flex flex-col items-center gap-3"
+          >
+            <p class="text-sm text-slate-500">
+              Showing {{ (meta.current_page - 1) * meta.per_page + 1 }} to
+              {{ Math.min(meta.current_page * meta.per_page, meta.total) }} of
+              {{ meta.total }} entries
+            </p>
             <div class="flex items-center gap-1">
-              <button class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">
+              <button
+                @click="changePage(meta.current_page - 1)"
+                :disabled="meta.current_page === 1"
+                class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 disabled:opacity-50"
+              >
                 <i class="fa-solid fa-chevron-left text-xs"></i>
               </button>
-              <button class="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center font-medium">1</button>
-              <button class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">2</button>
-              <button class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">3</button>
-              <button class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">...</button>
-              <button class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">
+
+              <template v-for="(page, index) in displayedPages" :key="index">
+                <button
+                  v-if="page !== '...'"
+                  @click="changePage(Number(page))"
+                  :class="[
+                    'w-9 h-9 rounded-lg flex items-center justify-center font-medium transition-colors',
+                    meta.current_page === page
+                      ? 'bg-orange-500 text-white'
+                      : 'border border-gray-200 text-slate-500 hover:bg-gray-100',
+                  ]"
+                >
+                  {{ page }}
+                </button>
+                <span
+                  v-else
+                  class="w-9 h-9 flex items-center justify-center text-slate-400 font-bold"
+                  >...</span
+                >
+              </template>
+
+              <button
+                @click="changePage(meta.current_page + 1)"
+                :disabled="meta.current_page === meta.last_page"
+                class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 disabled:opacity-50"
+              >
                 <i class="fa-solid fa-chevron-right text-xs"></i>
               </button>
             </div>
           </div>
         </div>
-
-        <!-- Desktop/Tablet Products Table (hidden on mobile) -->
         <div class="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[800px]">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th class="px-6 py-4 text-left">
-                  <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500">
-                </th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Product Name & Size</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Price</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Stock</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Category</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Rating</th>
-                <th class="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Action</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <!-- Product Row 1 -->
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4">
-                  <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500">
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=100" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                    <div>
-                      <p class="font-medium text-slate-800">Black T-shirt</p>
-                      <p class="text-sm text-slate-500">Size: S, M, L, XL</p>
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-6 py-4 text-left">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                    />
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Product Name & Size
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Price
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Stock
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Category
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Rating
+                  </th>
+                  <th
+                    class="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody v-if="productStore.isLoading">
+                <tr v-for="n in 5" :key="n" class="animate-pulse border-b border-gray-100">
+                  <td class="p-4 pl-6"><div class="h-4 w-4 bg-gray-200 rounded"></div></td>
+                  <td class="p-4">
+                    <div class="flex items-center gap-4">
+                      <div class="h-12 w-12 bg-gray-200 rounded-lg shrink-0"></div>
+                      <div class="space-y-2">
+                        <div class="h-4 bg-gray-200 rounded w-32"></div>
+                        <div class="h-3 bg-gray-200 rounded w-20"></div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 font-medium text-slate-800">$80.00</td>
-                <td class="px-6 py-4">
-                  <div>
-                    <span class="text-slate-800">486 Item</span>
-                    <span class="text-orange-500 text-sm"> Left</span>
-                  </div>
-                  <span class="text-green-500 text-sm">155 Sold</span>
-                </td>
-                <td class="px-6 py-4 text-slate-600">Fashion</td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="flex items-center gap-1 text-amber-500">
-                      <i class="fa-solid fa-star text-xs"></i> 4.5
-                    </span>
-                    <span class="text-slate-500 text-sm">55 Review</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center justify-center gap-2">
-                    <router-link to="/admin/products/1" class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 hover:text-slate-700">
-                      <i class="fa-solid fa-eye text-sm"></i>
-                    </router-link>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-blue-500 hover:bg-blue-50">
-                      <i class="fa-solid fa-pen text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-red-500 hover:bg-red-50">
-                      <i class="fa-solid fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td class="p-4 text-center">
+                    <div class="h-6 bg-gray-200 rounded-full w-24 mx-auto"></div>
+                  </td>
+                  <td class="p-4">
+                    <div class="space-y-2">
+                      <div class="h-4 bg-gray-200 rounded w-16"></div>
+                      <div class="h-3 bg-gray-200 rounded w-12"></div>
+                    </div>
+                  </td>
+                  <td class="p-4">
+                    <div class="space-y-2">
+                      <div class="h-4 bg-gray-200 rounded w-10"></div>
+                      <div class="h-3 bg-gray-200 rounded w-14"></div>
+                    </div>
+                  </td>
+                  <td class="p-4"><div class="h-6 bg-gray-200 rounded-full w-16"></div></td>
+                  <td class="p-4">
+                    <div class="flex items-center justify-end gap-2">
+                      <div class="h-8 w-8 bg-gray-200 rounded-lg"></div>
+                      <div class="h-8 w-8 bg-gray-200 rounded-lg"></div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
 
-              <!-- Product Row 2 -->
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4">
-                  <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500">
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1551028719-00167b16eac5?w=100" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                    <div>
-                      <p class="font-medium text-slate-800">Olive Green Leather Bag</p>
-                      <p class="text-sm text-slate-500">Size: S, M</p>
+              <tbody v-else class="divide-y divide-gray-100">
+                <tr
+                  v-for="product in productStore.products"
+                  :key="product.id"
+                  class="hover:bg-gray-50 transition-colors"
+                >
+                  <td class="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                    />
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <img
+                        :src="getProductImage(product)"
+                        :alt="product.name"
+                        class="w-12 h-12 rounded-lg object-cover"
+                      />
+                      <div>
+                        <p class="font-medium text-slate-800">{{ product.name }}</p>
+                        <p class="text-sm text-slate-500">
+                          Size: {{ formatSizes(product.variants) }}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 font-medium text-slate-800 line-through text-slate-400">$136.00</td>
-                <td class="px-6 py-4">
-                  <div>
-                    <span class="text-slate-800">784 Item</span>
-                    <span class="text-orange-500 text-sm"> Left</span>
-                  </div>
-                  <span class="text-green-500 text-sm">674 Sold</span>
-                </td>
-                <td class="px-6 py-4 text-slate-600">Hand Bag</td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="flex items-center gap-1 text-amber-500">
-                      <i class="fa-solid fa-star text-xs"></i> 4.1
-                    </span>
-                    <span class="text-slate-500 text-sm">141 Review</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center justify-center gap-2">
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 hover:text-slate-700">
-                      <i class="fa-solid fa-eye text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-blue-500 hover:bg-blue-50">
-                      <i class="fa-solid fa-pen text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-red-500 hover:bg-red-50">
-                      <i class="fa-solid fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex flex-col">
+                      <span class="font-medium text-slate-800">
+                        ${{ Number(product.final_price).toFixed(2) }}
+                      </span>
+                      <span v-if="product.discount > 0" class="text-xs text-gray-400 line-through">
+                        ${{ Number(product.price).toFixed(2) }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div>
+                      <span class="text-slate-800"
+                        >{{ calculateTotalStock(product.variants) }} Item</span
+                      >
+                      <span class="text-orange-500 text-sm"> Left</span>
+                    </div>
+                    <span class="text-green-500 text-sm">{{ product.sales_count || 0 }} Sold</span>
+                  </td>
+                  <td class="px-6 py-4 text-slate-600">{{ product.category?.name }}</td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <span class="flex items-center gap-1 text-amber-500">
+                        <i class="fa-solid fa-star text-xs"></i> 4.5
+                      </span>
+                      <span class="text-slate-500 text-sm">55 Review</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-center gap-2">
+                      <router-link
+                        :to="`/admin/products/${product.id}`"
+                        class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 hover:text-slate-700"
+                      >
+                        <i class="fa-solid fa-eye text-sm"></i>
+                      </router-link>
+                      <router-link
+                        :to="`/admin/products/edit/${product.id}`"
+                        class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-blue-500 hover:bg-blue-50"
+                      >
+                        <i class="fa-solid fa-pen text-sm"></i>
+                      </router-link>
 
-              <!-- Product Row 3 -->
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4">
-                  <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500">
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                    <div>
-                      <p class="font-medium text-slate-800">Women Golden Dress</p>
-                      <p class="text-sm text-slate-500">Size: S, M</p>
+                      <button
+                        class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-red-500 hover:bg-red-50"
+                      >
+                        <i @click="handleDelete(product.id)" class="fa-solid fa-trash text-sm"></i>
+                      </button>
                     </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 font-medium text-slate-800 line-through text-slate-400">$219.00</td>
-                <td class="px-6 py-4">
-                  <div>
-                    <span class="text-slate-800">769 Item</span>
-                    <span class="text-orange-500 text-sm"> Left</span>
-                  </div>
-                  <span class="text-green-500 text-sm">100 Sold</span>
-                </td>
-                <td class="px-6 py-4 text-slate-600">Fashion</td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="flex items-center gap-1 text-amber-500">
-                      <i class="fa-solid fa-star text-xs"></i> 4.4
-                    </span>
-                    <span class="text-slate-500 text-sm">174 Review</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center justify-center gap-2">
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 hover:text-slate-700">
-                      <i class="fa-solid fa-eye text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-blue-500 hover:bg-blue-50">
-                      <i class="fa-solid fa-pen text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-red-500 hover:bg-red-50">
-                      <i class="fa-solid fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-
-              <!-- Product Row 4 -->
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4">
-                  <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500">
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                    <div>
-                      <p class="font-medium text-slate-800">Gray Cap For Men</p>
-                      <p class="text-sm text-slate-500">Size: S, M, L</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 font-medium text-slate-800">$76.00</td>
-                <td class="px-6 py-4">
-                  <div>
-                    <span class="text-slate-800">571 Item</span>
-                    <span class="text-orange-500 text-sm"> Left</span>
-                  </div>
-                  <span class="text-green-500 text-sm">87 Sold</span>
-                </td>
-                <td class="px-6 py-4 text-slate-600">Cap</td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="flex items-center gap-1 text-amber-500">
-                      <i class="fa-solid fa-star text-xs"></i> 4.2
-                    </span>
-                    <span class="text-slate-500 text-sm">23 Review</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center justify-center gap-2">
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 hover:text-slate-700">
-                      <i class="fa-solid fa-eye text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-blue-500 hover:bg-blue-50">
-                      <i class="fa-solid fa-pen text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-red-500 hover:bg-red-50">
-                      <i class="fa-solid fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-
-              <!-- Product Row 5 -->
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4">
-                  <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500">
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=100" alt="Product" class="w-12 h-12 rounded-lg object-cover">
-                    <div>
-                      <p class="font-medium text-slate-800">Dark Green Cargo Pant</p>
-                      <p class="text-sm text-slate-500">Size: S, M, L, XL</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 font-medium text-slate-800">$110.00</td>
-                <td class="px-6 py-4">
-                  <div>
-                    <span class="text-slate-800">241 Item</span>
-                    <span class="text-orange-500 text-sm"> Left</span>
-                  </div>
-                  <span class="text-green-500 text-sm">342 Sold</span>
-                </td>
-                <td class="px-6 py-4 text-slate-600">Fashion</td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="flex items-center gap-1 text-amber-500">
-                      <i class="fa-solid fa-star text-xs"></i> 4.4
-                    </span>
-                    <span class="text-slate-500 text-sm">109 Review</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center justify-center gap-2">
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 hover:text-slate-700">
-                      <i class="fa-solid fa-eye text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-blue-500 hover:bg-blue-50">
-                      <i class="fa-solid fa-pen text-sm"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-red-500 hover:bg-red-50">
-                      <i class="fa-solid fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <!-- Pagination -->
-          <div class="px-4 md:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100">
-            <p class="text-sm text-slate-500">Showing 1 to 5 of 50 entries</p>
+          <div
+            v-if="meta.total > 0"
+            class="px-4 md:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100"
+          >
+            <p class="text-sm text-slate-500">
+              Showing
+              <span class="font-medium text-slate-900">{{
+                (meta.current_page - 1) * meta.per_page + 1
+              }}</span>
+              to
+              <span class="font-medium text-slate-900">{{
+                Math.min(meta.current_page * meta.per_page, meta.total)
+              }}</span>
+              of
+              <span class="font-medium text-slate-900">{{ meta.total }}</span>
+              entries
+            </p>
+
             <div class="flex items-center gap-1 md:gap-2">
-              <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">
+              <button
+                @click="changePage(meta.current_page - 1)"
+                :disabled="meta.current_page === 1"
+                :class="[
+                  'w-8 h-8 rounded-lg border flex items-center justify-center transition-colors',
+                  meta.current_page === 1
+                    ? 'border-gray-100 text-gray-300 cursor-not-allowed'
+                    : 'border-gray-200 text-slate-500 hover:bg-gray-100',
+                ]"
+              >
                 <i class="fa-solid fa-chevron-left text-xs"></i>
               </button>
-              <button class="w-8 h-8 rounded-lg bg-orange-500 text-white flex items-center justify-center">1</button>
-              <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">2</button>
-              <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100 hidden sm:flex">3</button>
-              <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">...</button>
-              <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">10</button>
-              <button class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">
+
+              <template v-for="(page, index) in displayedPages" :key="index">
+                <button
+                  v-if="page !== '...'"
+                  @click="changePage(Number(page))"
+                  :class="[
+                    'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all',
+                    meta.current_page === page
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'border border-gray-200 text-slate-500 hover:bg-gray-100',
+                  ]"
+                >
+                  {{ page }}
+                </button>
+                <span
+                  v-else
+                  class="w-8 h-8 flex items-center justify-center text-slate-400 font-bold pb-2"
+                >
+                  ...
+                </span>
+              </template>
+
+              <button
+                @click="changePage(meta.current_page + 1)"
+                :disabled="meta.current_page === meta.last_page"
+                :class="[
+                  'w-8 h-8 rounded-lg border flex items-center justify-center transition-colors',
+                  meta.current_page === meta.last_page
+                    ? 'border-gray-100 text-gray-300 cursor-not-allowed'
+                    : 'border-gray-200 text-slate-500 hover:bg-gray-100',
+                ]"
+              >
                 <i class="fa-solid fa-chevron-right text-xs"></i>
               </button>
             </div>
