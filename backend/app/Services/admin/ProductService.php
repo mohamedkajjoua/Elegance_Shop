@@ -45,23 +45,51 @@ class ProductService
     {
         try {
             DB::beginTransaction();
+
             $product = Product::findOrFail($id);
+
+
             $data['final_price'] = $data['price'] - ($data['price'] * ($data['discount'] ?? 0) / 100);
 
+
             $product->update($data);
+
+
+            if (!empty($data['deleted_images'])) {
+                $imagesToDelete = $product->images()->whereIn('id', $data['deleted_images'])->get();
+
+                foreach ($imagesToDelete as $image) {
+                    // 1. تنظيف المسار: إزالة الرابط الكامل وإزالة كلمة storage إذا وجدت
+                    // مثال: يحول "http://domain.com/storage/products/1.jpg" إلى "products/1.jpg"
+                    $relativePath = str_replace(url('/storage/'), '', $image->url); // لو الرابط كامل
+                    $relativePath = str_replace('/storage/', '', $relativePath);
+
+
+                    if (Storage::disk('public')->exists($relativePath)) {
+                        Storage::disk('public')->delete($relativePath);
+                    }
+
+
+                    $image->delete();
+                }
+            }
+
+
             if (!empty($data['variants'])) {
+
                 $product->variants()->delete();
                 $this->createVariants($product->id, $data['variants']);
             }
 
-            // ✅ إضافة صور جديدة إذا كانت موجودة
+
             if (!empty($data['images'])) {
                 $this->uploadImages($product->id, $data['images']);
             }
 
             DB::commit();
 
-            return $product;
+
+            return $product->load(['images', 'variants']);
         } catch (\Exception $err) {
             DB::rollBack();
             throw $err;
