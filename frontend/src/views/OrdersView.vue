@@ -54,13 +54,13 @@ const filteredOrders = (status) => {
 <template>
   <div class="pb-12">
     <Breadcrumb :items="breadcrumbItems" />
-    
+
     <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
       <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6">Order History</h2>
-      
+
       <!-- Tabs -->
       <div class="flex gap-2 md:gap-4 mb-6 md:mb-8 border-b border-border overflow-x-auto pb-1">
-        <button 
+        <button
           v-for="tab in ['all', 'processing', 'shipping', 'delivered']"
           :key="tab"
           :class="[
@@ -75,7 +75,7 @@ const filteredOrders = (status) => {
 
       <!-- Orders List -->
       <div class="space-y-4 md:space-y-6">
-        <div 
+        <div
           v-for="order in filteredOrders(activeTab)"
           :key="order.id"
           class="border border-border rounded-xl overflow-hidden"
@@ -100,9 +100,9 @@ const filteredOrders = (status) => {
               <span class="font-bold text-base sm:text-lg">${{ order.total.toFixed(2) }}</span>
             </div>
           </div>
-          
+
           <div class="p-3 sm:p-4 space-y-3 sm:space-y-4">
-            <div 
+            <div
               v-for="(item, index) in order.items"
               :key="index"
               class="flex items-center gap-3 sm:gap-4"
@@ -115,12 +115,12 @@ const filteredOrders = (status) => {
               <span class="font-bold text-sm sm:text-base">${{ item.price }}</span>
             </div>
           </div>
-          
+
           <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t border-border">
             <button class="w-full sm:w-auto px-3 sm:px-4 py-2 border border-border rounded-lg text-xs sm:text-sm font-medium hover:border-primary hover:text-primary transition-colors">
               View Details
             </button>
-            <button 
+            <button
               v-if="order.status === 'delivered'"
               class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-primary text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-primary-dark transition-colors"
             >

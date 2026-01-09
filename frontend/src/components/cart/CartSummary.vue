@@ -1,4 +1,4 @@
-<script setup>
+ <script setup>
 import { useCartStore } from '@/stores/cart'
 
 const cartStore = useCartStore()
@@ -34,3 +34,7 @@ function proceedToCheckout() {
     </button>
   </div>
 </template>
+
+
+
+
