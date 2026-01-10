@@ -39,6 +39,7 @@ class StoreProductRequest extends FormRequest
             'variants.*.stock' => 'required|integer|min:0',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+
         ];
     }
 }

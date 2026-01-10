@@ -145,15 +145,29 @@ class User extends Authenticatable implements JWTSubject
     //  PERMISSIONS
     public function hasPermission(string $permission): bool
     {
-        try {
+        // 1. جلب الصلاحيات من الكونفيج بناءً على الدور
+        $rolePermissions = config("permissions.roles.{$this->role}") ?? [];
 
-            [$module, $action] = explode('.', $permission, 2);
-        } catch (\Exception $se) {
-            return false;
+        // 2. السماح للأدمن (Wildcard *)
+        if (in_array('*', $rolePermissions)) {
+            return true;
         }
-        $permission = config('permissions')[$this->role] ?? [];
 
-        return isset($permission[$module]) && in_array($action, $permission[$module], true);
+        // 3. التحقق المباشر
+        if (in_array($permission, $rolePermissions)) {
+            return true;
+        }
+
+
+        $parts = explode('.', $permission);
+        if (count($parts) > 1) {
+            $module = $parts[0];
+            if (in_array("{$module}.*", $rolePermissions)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

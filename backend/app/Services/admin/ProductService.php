@@ -45,23 +45,51 @@ class ProductService
     {
         try {
             DB::beginTransaction();
+
             $product = Product::findOrFail($id);
+
+
             $data['final_price'] = $data['price'] - ($data['price'] * ($data['discount'] ?? 0) / 100);
 
+
             $product->update($data);
+
+
+            if (!empty($data['deleted_images'])) {
+                $imagesToDelete = $product->images()->whereIn('id', $data['deleted_images'])->get();
+
+                foreach ($imagesToDelete as $image) {
+                    // 1. تنظيف المسار: إزالة الرابط الكامل وإزالة كلمة storage إذا وجدت
+                    // مثال: يحول "http://domain.com/storage/products/1.jpg" إلى "products/1.jpg"
+                    $relativePath = str_replace(url('/storage/'), '', $image->url); // لو الرابط كامل
+                    $relativePath = str_replace('/storage/', '', $relativePath);
+
+
+                    if (Storage::disk('public')->exists($relativePath)) {
+                        Storage::disk('public')->delete($relativePath);
+                    }
+
+
+                    $image->delete();
+                }
+            }
+
+
             if (!empty($data['variants'])) {
+
                 $product->variants()->delete();
                 $this->createVariants($product->id, $data['variants']);
             }
 
-            // ✅ إضافة صور جديدة إذا كانت موجودة
+
             if (!empty($data['images'])) {
                 $this->uploadImages($product->id, $data['images']);
             }
 
             DB::commit();
 
-            return $product;
+
+            return $product->load(['images', 'variants']);
         } catch (\Exception $err) {
             DB::rollBack();
             throw $err;
@@ -102,33 +130,34 @@ class ProductService
         }
     }
 
-    public function getAllProducts($perPage = 15)
+    public function getAllProducts($perPage = 10)
     {
         return Product::with([
             'category',
             'brand',
             'variants',
             'images',
-            'reviews',
 
-        ])->select([
-            'id',
-            'name',
-            'description',
-            'short_description',
-            'price',
-            'discount',
-            'final_price',
-            'category_id',
-            'brand_id',
-            'is_featured',
-            'is_active',
-            'views_count',
-            'sales_count',
-            'shipping',
-            'created_at',
-            'updated_at'
-        ])
+        ])->withCount('reviews')
+            ->withAvg('reviews', 'rating')
+            ->select([
+                'id',
+                'name',
+                'description',
+                'short_description',
+                'price',
+                'discount',
+                'final_price',
+                'category_id',
+                'brand_id',
+                'is_featured',
+                'is_active',
+                'views_count',
+                'sales_count',
+                'shipping',
+                'created_at',
+                'updated_at'
+            ])
             ->latest()
             ->paginate($perPage);
     }
@@ -258,18 +287,16 @@ class ProductService
         return [
             'id' => $product->id,
             'name' => $product->name,
-
-            'slug' => $product->slug ?? \Illuminate\Support\Str::slug($product->name),
+            'description' => $product->description,
+            'short_description' => $product->short_description,
             'price' => (float) $product->price,
             'final_price' => (float) $product->final_price,
+            'shipping' => (float) $product->shipping,
             'discount' => (int) $product->discount,
             'is_active' => (bool) $product->is_active,
             'is_featured' => (bool) $product->is_featured,
-
             'category' => $product->category ? ['id' => $product->category->id, 'name' => $product->category->name] : null,
             'brand' => $product->brand ? ['id' => $product->brand->id, 'name' => $product->brand->name] : null,
-
-
             'variants' => $product->variants->map(function ($variant) {
                 return [
                     'id' => $variant->id,
@@ -279,7 +306,6 @@ class ProductService
                     'price' => $variant->price,
                 ];
             }),
-
 
             'images' => $product->images->map(function ($image) {
                 return [

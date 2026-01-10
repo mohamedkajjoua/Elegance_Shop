@@ -15,7 +15,6 @@ export interface IProductVariant {
 export interface IProduct {
   id: number;
   name: string;
-  slug: string;
   description: string;
   short_description: string;
   price: number;
@@ -38,4 +37,21 @@ export interface IProductParams {
   min_price?: number;
   max_price?: number;
   sort_by?: "newest" | "price_low" | "price_high";
+}
+
+// send data to server
+export interface IProductPayload {
+  name: string;
+  description: string;
+  short_description: string;
+  price: number;
+  discount: number;
+  shipping: number;
+  category_id: number;
+  brand_id: number;
+  is_featured: boolean;
+  is_active: boolean;
+  variants: IProductVariant[];
+  images?: File[];
+  deleted_images?: number[];
 }

@@ -58,6 +58,8 @@ class ProductSearchController extends Controller
             'is_featured' => $request->input('is_featured'),
             'in_stock' => $request->input('in_stock'),
             'sort_by' => $request->input('sort_by', 'newest'),
+            'size'        => $request->input('size'),
+            'color'       => $request->input('color'),
         ];
         $perPage = $request->input('per_page', 15);
         $product = $this->productSearchService->filterProduct($filters, $perPage);
@@ -110,7 +112,8 @@ class ProductSearchController extends Controller
         $product = $this->productSearchService->getRelatedProducts($id, $limit);
         return response()->json([
             'success' => true,
-            'message' => 'Related products retrieved successfully'
+            'message' => 'Related products retrieved successfully',
+            'data' => $product,
         ], 200);
     }
 }

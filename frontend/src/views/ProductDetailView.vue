@@ -20,7 +20,6 @@ const { product, relatedProducts, isLoading } = storeToRefs(productShopStore);
 // --- Functions Definitions --
 
 const loadPageData = async (id: string) => {
-  // ✅ إصلاح: التمرير للأعلى فوراً ليعطي شعوراً بالسرعة
   window.scrollTo({ top: 0, behavior: "instant" });
   await productShopStore.fetchProductDetails(id);
 };
