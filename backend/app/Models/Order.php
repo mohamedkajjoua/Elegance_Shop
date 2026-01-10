@@ -13,35 +13,41 @@ use App\Models\OrderItem;
 use App\Models\PaymentTransaction;
 use App\Models\Review;
 
-
-
 class Order extends Model
 {
-      use HasFactory;
-        use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
+    protected $fillable = [
+        'user_id',
+        'addresse_id', 
+        'subtotal',
+        'total_price',
+        'status',
+        'payment_method',
+        'payment_status'
+    ];
 
-    public function user():BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-      public function shippingAddress():BelongsTo
+    public function shippingAddress(): BelongsTo
     {
-        return $this->belongsTo(Address::class, 'shipping_address_id');
+        return $this->belongsTo(Address::class, 'addresse_id'); // correspond à la colonne
     }
 
-     public function orderItems():HasMany
+    public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
-     public function paymentTransactions():HasMany
+    public function paymentTransactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class);
     }
 
-        public function reviews():HasMany
+    public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
     }

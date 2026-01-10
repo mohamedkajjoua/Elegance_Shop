@@ -22,6 +22,6 @@ class Addresse extends Model
 
     public function orders():hasMany
     {
-        return $this->hasMany(Order::class, 'shipping_address_id');
+        return $this->hasMany(Order::class, 'address_id');
     }
 }

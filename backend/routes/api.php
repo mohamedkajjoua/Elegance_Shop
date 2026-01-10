@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
-
+use App\Http\Controllers\Api\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,6 +70,11 @@ Route::prefix('products')->group(function () {
         Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     });
 });
+/*
+|--------------------------------------------------------------------------
+| cart Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth:api')->group(function () {
 
     Route::get('/cart', [CartController::class, 'index']);
@@ -136,3 +141,8 @@ Route::prefix('home')->group(function () {
         //
     });
 });
+/*
+|--------------------------------------------------------------------------
+| cart Routes
+|--------------------------------------------------------------------------
+*/Route::middleware('auth:api')->post('/orders', [OrderController::class, 'store']);
