@@ -503,12 +503,12 @@ function goToProduct(id) {
               </span>
             </div>
 
-            <button
+            <!--  <button
               @click.stop
               class="absolute bottom-4 left-4 right-4 py-3 bg-white text-gray-900 font-semibold rounded-xl text-sm opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-3 group-hover:translate-y-0 hover:bg-gray-900 hover:text-white"
             >
               Add to Cart
-            </button>
+            </button> -->
           </div>
 
           <div class="px-1">

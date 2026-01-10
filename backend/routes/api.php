@@ -3,13 +3,11 @@
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\CategoryController;
 use App\Http\Controllers\admin\ProductController;
+use App\Http\Controllers\admin\SettingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\admin\SettingController;
-
-
-
+use App\Http\Controllers\Api\CartController;
 
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
@@ -71,6 +69,13 @@ Route::prefix('products')->group(function () {
         Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('permission:products.destroy');;
         Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     });
+});
+Route::middleware('auth:api')->group(function () {
+
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 });
 
 /*

@@ -14,6 +14,10 @@ class Cart extends Model
      use HasFactory;
      use SoftDeletes;
 
+    protected $fillable = [
+        'user_id',
+        'expires_at'
+    ];
 
     public function user(): BelongsTo
     {
