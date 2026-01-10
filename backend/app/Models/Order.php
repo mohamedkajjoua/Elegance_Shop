@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
-use App\Models\Address;
+use App\Models\Addresse;
 use App\Models\OrderItem;
 use App\Models\PaymentTransaction;
 use App\Models\Review;
@@ -19,7 +19,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
-        'addresse_id', 
+        'addresse_id',
         'subtotal',
         'total_price',
         'status',
@@ -34,7 +34,7 @@ class Order extends Model
 
     public function shippingAddress(): BelongsTo
     {
-        return $this->belongsTo(Address::class, 'addresse_id'); // correspond à la colonne
+        return $this->belongsTo(Addresse::class, 'addresse_id'); // correspond à la colonne
     }
 
     public function orderItems(): HasMany

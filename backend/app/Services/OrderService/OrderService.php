@@ -62,7 +62,7 @@ class OrderService
                 $item->productVariant->decrement('stock', $item->quantity);
             }
 
-            // تفريغ panier
+            // vider le  panier
             $cart->cartItems()->delete();
 
             return $order->load([
@@ -71,4 +71,63 @@ class OrderService
             ]);
         });
     }
+
+       //  User (Order History)
+    public function getUserOrders($user)
+    {
+        return Order::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get([
+                'id',
+                'total_price',
+                'status',
+                'payment_status',
+                'created_at'
+            ]);
+    }
+
+
+     public function getOrderDetails(int $orderId, $user)
+    {
+
+        $order = Order::with([
+                'shippingAddress',
+                'orderItems.productVariant.product'  //
+            ])
+            ->where('id', $orderId)
+            ->where('user_id', $user->id) // check ownership
+            ->first();
+
+        if (!$order) {
+            return null; // Forbidden
+        }
+
+        //  JSON response
+        return [
+            'id' => $order->id,
+            'subtotal' => $order->subtotal,
+            'total_price' => $order->total_price,
+            'status' => $order->status,
+            'payment_status' => $order->payment_status,
+            'address' => $order->shippingAddress ? [
+                'city' => $order->shippingAddress->city,
+                'street' => $order->shippingAddress->street,
+
+            ] : null,
+            'items' => $order->orderItems->map(function ($item) {
+                return [
+                    'product_name' => $item->productVariant->product->name,
+
+                    'variant' => $item->productVariant
+                     ? ($item->productVariant->size . ' / ' . $item->productVariant->color)
+                     : 'N/A',
+
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
+                    'subtotal' => $item->quantity * $item->price,
+                ];
+            }),
+        ];
+    }
+
 }

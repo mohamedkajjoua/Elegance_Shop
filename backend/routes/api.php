@@ -145,4 +145,12 @@ Route::prefix('home')->group(function () {
 |--------------------------------------------------------------------------
 | cart Routes
 |--------------------------------------------------------------------------
-*/Route::middleware('auth:api')->post('/orders', [OrderController::class, 'store']);
+*/
+
+
+
+Route::middleware('auth:api')->group(function () {
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders', [OrderController::class, 'index']);      // Order History
+    Route::get('/orders/{id}', [OrderController::class, 'show']);  // Order Details
+});
