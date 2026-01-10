@@ -94,6 +94,7 @@ const selectedVariant = computed(() => {
   );
 });
 
+
 //slider images product
 const thumbnails = computed(() => {
   if (product.value?.images && product.value.images.length > 0) {
@@ -141,22 +142,24 @@ const addToCart = () => {
     return;
   }
 
-  console.log("Add to Cart:", {
-    product_id: product.value?.id,
-    variant_id: selectedVariant.value.id,
-    quantity: quantity.value,
-  });
-
-  cartStore.addToCart({ ...product.value, ...selectedVariant.value, quantity: quantity.value });
-  alert("Added to cart!");
+  //  Appel correct au store avec l'ID du variant et la quantité
+  cartStore.addToCart(selectedVariant.value.id, quantity.value)
+    .then(() => {
+       alert("Product added to cart!");
+    })
+    .catch((err) => {
+      console.error("Error adding to cart:", err);
+      alert("Failed to add product to cart.");
+    });
 };
+
 
 function toggleWishlist() {
   if (product.value) wishlistStore.toggleWishlist(product.value);
 }
 
 // Reviews Data & Logic
-var reviews = ref([
+const reviews = ref([
   {
     id: 1,
     name: "Sarah M.",

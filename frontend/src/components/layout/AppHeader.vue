@@ -85,7 +85,7 @@
         <span class="hidden lg:inline">Wishlist</span>
       </router-link>
 
-      <router-link
+         <router-link
         to="/cart"
         class="action-btn cart-btn flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors relative"
       >
@@ -98,6 +98,8 @@
           {{ cartStore.totalItems }}
         </span>
       </router-link>
+
+
 
       <div v-if="authStore.isAuthenticated" class="user-profile-wrapper relative" @click.stop>
         <div class="user-profile cursor-pointer" @click="toggleProfileDropdown">
@@ -252,8 +254,12 @@ import { useUserStore } from "@/stores/user";
 const router = useRouter();
 const route = useRoute(); // To sync input with URL
 const cartStore = useCartStore();
+
+
+
 const authStore = useAuthStore();
 const userStore = useUserStore();
+
 
 const searchQuery = ref("");
 let searchTimeout: any = null;
@@ -292,7 +298,7 @@ function clearSearch() {
   }
 }
 
-// ✅ Corrected Handle Search (Redirects instead of Fetching)
+//  Corrected Handle Search (Redirects instead of Fetching)
 const handleSearch = () => {
   // If search is too short, do nothing (or show error)
   if (searchQuery.value.length > 0 && searchQuery.value.length < 2) {

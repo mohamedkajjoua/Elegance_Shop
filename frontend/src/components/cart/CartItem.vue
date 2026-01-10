@@ -1,51 +1,24 @@
 <script setup>
-defineProps({
-  item: {
-    type: Object,
-    required: true
-  },
-  index: {
-    type: Number,
-    required: true
-  }
-})
+const props = defineProps({ item: Object, index: Number })
+const emit = defineEmits(['updateQuantity','remove'])
 
-const emit = defineEmits(['updateQuantity', 'remove'])
-
-function updateQty(change) {
-  emit('updateQuantity', change)
-}
-
-function removeItem() {
-  emit('remove')
-}
+function updateQty(change){ emit('updateQuantity', change) }
+function removeItem(){ emit('remove') }
 </script>
 
 <template>
-  <div class="cart-item">
-    <div class="cart-item-image">
-      <img :src="item.image" :alt="item.name || item.title">
+  <div class="cart-item flex justify-between items-center p-2 border-b">
+    <img :src="item.productVariant.image" alt="" class="w-16 h-16 object-cover"/>
+    <div class="flex-1 px-2">
+      <p>{{ item.productVariant.name }}</p>
+      <p>Size: {{ item.size }} | Color: {{ item.color }}</p>
     </div>
-    <div class="cart-item-details">
-      <div>
-        <h3 class="cart-item-title">{{ item.name || item.title }}</h3>
-        <p class="cart-item-variant">Size: {{ item.size }} • Color: {{ item.color }}</p>
-      </div>
-      <div class="cart-item-actions">
-        <div class="qty-input" style="padding: 8px 16px;">
-          <button class="qty-btn" @click="updateQty(-1)">
-            <i class="fa-solid fa-minus"></i>
-          </button>
-          <span class="qty-val">{{ item.quantity }}</span>
-          <button class="qty-btn" @click="updateQty(1)">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
-        <span class="cart-item-price">${{ (item.price * item.quantity).toFixed(2) }}</span>
-      </div>
+    <div class="flex items-center gap-2">
+      <button @click="updateQty(-1)">-</button>
+      <span>{{ item.quantity }}</span>
+      <button @click="updateQty(1)">+</button>
+      <span>${{ (item.quantity * item.productVariant.price).toFixed(2) }}</span>
+      <button @click="removeItem">🗑️</button>
     </div>
-    <button class="cart-item-remove" @click="removeItem">
-      <i class="fa-solid fa-trash"></i>
-    </button>
   </div>
 </template>

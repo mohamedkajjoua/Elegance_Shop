@@ -13,7 +13,11 @@ class CartItem extends Model
 {
     use HasFactory;
     use SoftDeletes;
-
+    protected $fillable = [
+        'cart_id',
+        'product_variant_id',
+        'quantity'
+    ];
     public function cart(): BelongsTo
     {
         return $this->belongsTo(Cart::class);
@@ -22,6 +26,6 @@ class CartItem extends Model
 
     public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class);
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 }
