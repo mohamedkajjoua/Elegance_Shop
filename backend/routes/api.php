@@ -154,3 +154,11 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/orders', [OrderController::class, 'index']);      // Order History
     Route::get('/orders/{id}', [OrderController::class, 'show']);  // Order Details
 });
+
+Route::get('/order-pdf/{id}', function($id) {
+    $order = App\Models\Order::with('orderItems.productVariant.product', 'user', 'shippingAddress')->findOrFail($id);
+    $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('emails.invoice_pdf', compact('order'));
+    return $pdf->stream('order-'.$order->id.'.pdf');
+});
+
+
