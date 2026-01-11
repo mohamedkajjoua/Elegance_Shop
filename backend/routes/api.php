@@ -13,6 +13,7 @@ use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -143,7 +144,7 @@ Route::prefix('home')->group(function () {
 });
 /*
 |--------------------------------------------------------------------------
-| cart Routes
+| orders Routes
 |--------------------------------------------------------------------------
 */
 
@@ -160,5 +161,18 @@ Route::get('/order-pdf/{id}', function($id) {
     $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('emails.invoice_pdf', compact('order'));
     return $pdf->stream('order-'.$order->id.'.pdf');
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| adresses Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+});
+
 
 
