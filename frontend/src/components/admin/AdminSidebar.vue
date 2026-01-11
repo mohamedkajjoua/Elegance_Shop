@@ -5,16 +5,28 @@
     </div>
 
     <nav class="flex-1 px-4 py-6 space-y-2">
-      <router-link to="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded transition-colors" active-class="bg-gray-700 text-white">
+      <router-link
+        to="/admin/dashboard"
+        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded transition-colors"
+        active-class="bg-gray-700 text-white"
+      >
         <span class="mr-3">🏠</span> Dashboard
       </router-link>
 
-      <router-link to="/admin/products" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded transition-colors" active-class="bg-gray-700 text-white">
+      <router-link
+        to="/admin/products"
+        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded transition-colors"
+        active-class="bg-gray-700 text-white"
+      >
         <span class="mr-3">📦</span>
-        Produits
+        Products
       </router-link>
 
-      <router-link to="/admin/orders" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded transition-colors" active-class="bg-gray-700 text-white">
+      <router-link
+        to="/admin/orders"
+        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded transition-colors"
+        active-class="bg-gray-700 text-white"
+      >
         <span class="mr-3">🛒</span>
         Commandes
       </router-link>
