@@ -15,16 +15,37 @@ use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 
+//Controller du order
+use App\Http\Controllers\Api\Admin\OrderController;
 
-<<<<<<< HEAD
+
 
 
 
 Route::prefix('admin')->group(function () {
     Route::apiResource('products', ProductController::class);
+
+
+
+// --- GESTION DES COMMANDES ---
+    
+    //  Liste des commandes
+    Route::get('/orders', [OrderController::class, 'index']);
+
+    //  EXPORT CSV 
+    Route::get('/orders/export/csv', [OrderController::class, 'exportCsv']); 
+
+    //  Détails d'une commande par ID
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+
+    //  Mise à jour du statut général
+    Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+
+    //  Annulation et Remboursement (Nouvelles routes)
+    Route::patch('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::patch('/orders/{id}/refund', [OrderController::class, 'refund']);
 });
-=======
->>>>>>> 22a62b1868918bc06b54e2624af5453586e004b3
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -128,4 +149,3 @@ Route::prefix('brands')->group(function () {
     });
 });
  
-

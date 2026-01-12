@@ -65,10 +65,8 @@ class AuthService
             'expires_in' => auth('api')->factory()->getTTL() * 60,
 
             'permissions' => $user->getAllPermissions(),
-<<<<<<< Updated upstream
             'permissions_by_module' => $user->getPermissionsByModule()
-=======
->>>>>>> Stashed changes
+
         ];
     }
 
