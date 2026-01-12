@@ -14,6 +14,15 @@ class Addresse extends Model
 {
      use HasFactory;
       use SoftDeletes;
+        protected $fillable = [
+        'user_id',
+        'country',
+        'city',
+        'street',
+         'post_code',
+         'phone',
+
+    ];
 
     public function user():BelongsTo
     {
@@ -22,6 +31,6 @@ class Addresse extends Model
 
     public function orders():hasMany
     {
-        return $this->hasMany(Order::class, 'shipping_address_id');
+        return $this->hasMany(Order::class, 'address_id');
     }
 }

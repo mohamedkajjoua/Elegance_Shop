@@ -12,7 +12,8 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
-
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,6 +71,11 @@ Route::prefix('products')->group(function () {
         Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     });
 });
+/*
+|--------------------------------------------------------------------------
+| cart Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth:api')->group(function () {
 
     Route::get('/cart', [CartController::class, 'index']);
@@ -143,3 +149,37 @@ Route::prefix('home')->group(function () {
         //
     });
 });
+/*
+|--------------------------------------------------------------------------
+| orders Routes
+|--------------------------------------------------------------------------
+*/
+
+
+
+Route::middleware('auth:api')->group(function () {
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders', [OrderController::class, 'index']);      // Order History
+    Route::get('/orders/{id}', [OrderController::class, 'show']);  // Order Details
+});
+
+Route::get('/order-pdf/{id}', function($id) {
+    $order = App\Models\Order::with('orderItems.productVariant.product', 'user', 'shippingAddress')->findOrFail($id);
+    $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('emails.invoice_pdf', compact('order'));
+    return $pdf->stream('order-'.$order->id.'.pdf');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| adresses Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+});
+
+
+
