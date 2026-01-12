@@ -58,8 +58,6 @@ class User extends Authenticatable implements JWTSubject
         'role',
         'phone',
         'avatar',
-        'is_active',
-        'last_login'
     ];
 
     /**
@@ -88,7 +86,7 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
-    //get full name 
+    //get full name
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
@@ -98,7 +96,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * check roles
-     * 
+     *
      * @param string $role
      * @return bool
      */
@@ -109,7 +107,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * check one of the multiple roles
-     * 
+     *
      * @param array<string> $roles
      * @return bool
      */
@@ -121,7 +119,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Check all roles
-     * 
+     *
      * @param array<string> $roles
      * @return bool
      */
@@ -174,7 +172,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Check at least onr of the permissions
-     * 
+     *
      * @param array<string> $permissions
      * @return bool
      */
@@ -191,7 +189,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Check all permissions
-     * 
+     *
      * @param array<string> $permissions
      * @return bool
      */
@@ -206,8 +204,8 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Gaining full user privileges 
-     * 
+     * Gaining full user privileges
+     *
      * @return array<string>
      */
     public function getAllPermissions(): array
@@ -219,10 +217,10 @@ class User extends Authenticatable implements JWTSubject
 
         /**
          * ex:
-         * ['module' => ['action 1','action 2']] 
+         * ['module' => ['action 1','action 2']]
          * to
          * ['module.action 1','module.action 2']
-         * 
+         *
          */
         foreach ($rolePermissions as $module => $actions) {
             if (is_array($actions)) {
@@ -236,7 +234,7 @@ class User extends Authenticatable implements JWTSubject
     }
     /**
      * Obtaining permissions is organized by module.
-     * 
+     *
      * @return array<string, array<string>>
      */
     public function getPermissionsByModule(): array
@@ -247,7 +245,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Checking that the user does not have permission
-     * 
+     *
      * @param string $permission
      * @return bool
      */
@@ -258,7 +256,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Gaining permissions for a specific module
-     * 
+     *
      * @param string $module
      * @return array<string>
      */

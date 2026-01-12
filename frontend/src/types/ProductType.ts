@@ -31,7 +31,6 @@ export interface IProduct {
 export interface IProductParams {
   page?: number;
   limit?: number;
-  per_page?: number;
   q?: string;
   category_id?: number;
   brand_id?: number;

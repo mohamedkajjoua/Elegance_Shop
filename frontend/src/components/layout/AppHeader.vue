@@ -243,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router"; // Added useRoute
 import { useCartStore } from "@/stores/cart";
 import { useAuthStore } from "@/stores/auth/auth";
@@ -252,6 +252,7 @@ import { useUserStore } from "@/stores/user";
 const router = useRouter();
 const route = useRoute(); // To sync input with URL
 const cartStore = useCartStore();
+
 const authStore = useAuthStore();
 const userStore = useUserStore();
 
@@ -260,6 +261,12 @@ let searchTimeout: any = null;
 const showProfileDropdown = ref(false);
 const showMobileMenu = ref(false);
 const showMobileSearch = ref(false);
+
+onMounted(() => {
+  if (authStore.token) {
+    cartStore.fetchCart();
+  }
+});
 
 function toggleProfileDropdown() {
   showProfileDropdown.value = !showProfileDropdown.value;
@@ -292,7 +299,7 @@ function clearSearch() {
   }
 }
 
-// ✅ Corrected Handle Search (Redirects instead of Fetching)
+//  Corrected Handle Search (Redirects instead of Fetching)
 const handleSearch = () => {
   // If search is too short, do nothing (or show error)
   if (searchQuery.value.length > 0 && searchQuery.value.length < 2) {

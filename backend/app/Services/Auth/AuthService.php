@@ -21,7 +21,7 @@ class AuthService
         try {
 
             $user = User::create($data);
-            if (!$token = JWTAuth::fromUser($user)) {
+            if (!$token = auth('api')->login($user)) {
                 throw new \Exception('Failed to generate token');
             }
             DB::commit();
@@ -47,7 +47,7 @@ class AuthService
     public function login($email, $password)
     {
         $credentials = ['email' => $email, 'password' => $password];
-        $token = JWTAuth::attempt($credentials);
+        $token = auth('api')->attempt($credentials);
         if (!$token) {
             throw ValidationException::withMessages([
                 'email' => ['Email or password is incorrect'],
@@ -66,7 +66,6 @@ class AuthService
 
             'permissions' => $user->getAllPermissions(),
             'permissions_by_module' => $user->getPermissionsByModule()
-
         ];
     }
 

@@ -11,7 +11,7 @@ class OrderService
 
     /**
      * ANNULER UNE COMMANDE
-     * Change le statut à 'Cancelled' si la commande n'est pas déjà expédiée.
+     * Change le statut à 'cancelled' si la commande n'est pas déjà expédiée.
      */
     public function cancelOrder($id)
     {
@@ -22,11 +22,11 @@ class OrderService
             throw new Exception("Impossible d'annuler une commande déjà expédiée ou livrée.");
         }
 
-        if ($order->status === 'Cancelled') {
+        if ($order->status === 'cancelled') {
             throw new Exception("Cette commande est déjà annulée.");
         }
 
-        $order->update(['status' => 'Cancelled']);
+        $order->update(['status' => 'cancelled']);
         
         // (Optionnel) : Ici, vous pourriez ajouter une logique pour remettre les produits en stock
         

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Admin;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\Admin\OrderService;            // Nécessaire pour injecter le service
@@ -38,6 +38,12 @@ class OrderController extends Controller
     public function show($id): JsonResponse
     {
         $order = $this->orderService->getOrderById($id);
+        
+        // Petite sécurité si la commande n'existe pas (géré aussi dans le service potentiellement)
+        if (!$order) {
+             return response()->json(['success' => false, 'message' => 'Commande introuvable'], 404);
+        }
+
         return response()->json([
             'success' => true,
             'data' => $order
@@ -46,17 +52,21 @@ class OrderController extends Controller
 
     /**
      * PATCH /api/admin/orders/{id}/status
-     * Met à jour le statut (ex: Shipped, Delivered)
+     * Met à jour le statut (ex: shipped, delivered)
      */
     public function updateStatus(UpdateOrderStatusRequest $request, $id): JsonResponse
     {
-        $order = $this->orderService->updateOrderStatus($id, $request->status);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Statut de la commande mis à jour avec succès',
-            'data' => $order
-        ]);
+        try {
+            $order = $this->orderService->updateOrderStatus($id, $request->status);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Statut de la commande mis à jour avec succès',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -114,6 +124,3 @@ class OrderController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 }
-
-
-

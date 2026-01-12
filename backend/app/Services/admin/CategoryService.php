@@ -2,15 +2,17 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Category; 
+use App\Models\Category;
 
 class CategoryService
 {
-    // Récupérer toutes les catégories (ta fonction existante améliorée)
+
     public function getAll()
     {
         return Category::query()
-            ->select(['id', 'name', 'created_at']) // J'ajoute created_at c'est utile pour l'admin
+            ->select(['id', 'name'])
+            ->select(['id', 'name', 'created_at'])
+            ->withCount('products')
             ->orderBy('name', 'asc')
             ->get();
     }
@@ -34,7 +36,7 @@ class CategoryService
     public function updateCategory($id, array $data)
     {
         $category = Category::findOrFail($id);
-        
+
         $category->update([
             'name' => $data['name']
         ]);
@@ -47,7 +49,7 @@ class CategoryService
     {
         $category = Category::findOrFail($id);
         $category->delete();
-        
+
         return true;
     }
 }

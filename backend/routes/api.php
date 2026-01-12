@@ -2,24 +2,19 @@
 
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\CategoryController;
-use App\Http\Controllers\admin\Api\ProductController;
+use App\Http\Controllers\admin\ProductController;
+use App\Http\Controllers\admin\SettingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\admin\SettingController;
-
-
-
+use App\Http\Controllers\Api\CartController;
 
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 
 //Controller du order
-use App\Http\Controllers\Api\Admin\OrderController;
-
-
-
+use App\Http\Controllers\Api\OrderController;
 
 
 Route::prefix('admin')->group(function () {
@@ -45,6 +40,7 @@ Route::prefix('admin')->group(function () {
     Route::patch('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::patch('/orders/{id}/refund', [OrderController::class, 'refund']);
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +98,13 @@ Route::prefix('products')->group(function () {
         Route::patch('/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     });
 });
+Route::middleware('auth:api')->group(function () {
+
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -113,7 +116,11 @@ Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
-        //
+
+        Route::post('/', [CategoryController::class, 'store']);
+        Route::put('/{id}', [CategoryController::class, 'update']);
+        Route::get('/{id}', [CategoryController::class, 'show']);
+        Route::delete('/{id}', [CategoryController::class, 'destroy']);
     });
 });
 
@@ -127,25 +134,40 @@ Route::prefix('brands')->group(function () {
     Route::get('/', [BrandController::class, 'index']);
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
-        //
+        Route::post('/', [BrandController::class, 'store']);
+        Route::put('/{id}', [BrandController::class, 'update']);
+        Route::get('/{id}', [BrandController::class, 'show']);
+        Route::delete('/{id}', [BrandController::class, 'destroy']);
     });
 });
 /*|--------------------------------------------------------------------------
 | Settings Routes
 |--------------------------------------------------------------------------*/
 
- Route::prefix('settings')->group(function () {
+Route::prefix('settings')->group(function () {
 
     Route::get('/', [SettingController::class, 'index']);
-        Route::post('/', [SettingController::class, 'store']);
-     Route::get('/{id}', [SettingController::class, 'show']);
-        Route::put('/{id}', [SettingController::class, 'update']);
-        Route::delete('/{id}', [SettingController::class, 'destroy']);
-      
+    Route::post('/', [SettingController::class, 'store']);
+    Route::get('/{id}', [SettingController::class, 'show']);
+    Route::put('/{id}', [SettingController::class, 'update']);
+    Route::delete('/{id}', [SettingController::class, 'destroy']);
+
 
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
         //
     });
 });
- 
+/*
+|--------------------------------------------------------------------------
+| home Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('home')->group(function () {
+
+    Route::get('/getCategoryToHome', [HomeController::class, 'getCategoryToHome']);
+
+    Route::middleware(['auth:api',])->group(function () {
+        //
+    });
+});

@@ -1,106 +1,88 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { defineStore } from "pinia";
+import api from "@/services/api";
 
-export const useCartStore = defineStore('cart', () => {
-    // Sample cart data
-    const sampleCartItems = [
-        {
-            id: 1,
-            name: 'Oversize Sweatshirt Premium',
-            price: 89.99,
-            image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=200&h=200&fit=crop',
-            size: 'L',
-            color: 'Black',
-            quantity: 2
-        },
-        {
-            id: 2,
-            name: 'Vintage Hoodie Classic',
-            price: 75.50,
-            image: 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=200&h=200&fit=crop',
-            size: 'M',
-            color: 'Grey',
-            quantity: 1
-        },
-        {
-            id: 3,
-            name: 'Streetwear Crewneck',
-            price: 65.00,
-            image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=200&h=200&fit=crop',
-            size: 'XL',
-            color: 'Navy',
-            quantity: 1
-        }
-    ]
+export const useCartStore = defineStore("cart", {
+  state: () => ({
+    items: [],
+    subtotal: 0,
+    total: 0,
+    tax: 0,
+    shipping: 0,
+  }),
 
-    // State - load from localStorage or use sample data
-    const storedCart = JSON.parse(localStorage.getItem('cart'))
-    const items = ref(storedCart && storedCart.length > 0 ? storedCart : sampleCartItems)
+  getters: {
+    totalItems(state) {
+      return state.items.reduce((sum, item) => sum + item.quantity, 0);
+    },
+  },
 
-    // Getters
-    const totalItems = computed(() => {
-        return items.value.reduce((acc, item) => acc + item.quantity, 0)
-    })
+  actions: {
+    // Mettre à jour les totaux
+    updateTotals(data) {
+      // 1. جلب العناصر (مع دعم snake_case)
+      const cartItems = data?.cart_items ?? data?.cartItems ?? [];
 
-    const subtotal = computed(() => {
-        return items.value.reduce((acc, item) => acc + (item.price * item.quantity), 0)
-    })
+      // 2. ✅ إصلاح هام: حساب المجموع يدوياً لأن الـ API لا يرسله
+      const subTotal = cartItems.reduce((sum, item) => {
+        // حماية: تحويل السعر لرقم والتأكد من وجوده
+        const price = parseFloat(item.product_variant?.price || 0);
+        return sum + price * item.quantity;
+      }, 0);
 
-    const tax = computed(() => subtotal.value * 0.05)
+      // 3. حساب باقي القيم بناءً على المجموع المحسوب
+      const tax = subTotal * 0.05;
+      const shipping = cartItems.length > 0 ? 10 : 0;
+      const total = subTotal + tax + shipping;
 
-    const shipping = computed(() => items.value.length > 0 ? 10 : 0)
+      // 4. تحديث الـ State
+      this.items = cartItems;
+      this.subtotal = subTotal;
+      this.tax = tax;
+      this.shipping = shipping;
+      this.total = total;
+    },
 
-    const total = computed(() => subtotal.value + tax.value + shipping.value)
+    // Récupérer le panier depuis l'API
+    async fetchCart() {
+      try {
+        const { data } = await api.get("/cart");
+        this.updateTotals(data);
+      } catch (error) {
+        console.error("Erreur fetchCart :", error.response?.data || error);
+      }
+    },
 
-    // Actions
-    function addToCart(product) {
-        const existing = items.value.findIndex(
-            item => item.id === product.id && item.size === product.size && item.color === product.color
-        )
+    // Ajouter un produit au panier
+    async addToCart(productVariantId, quantity = 1) {
+      try {
+        const { data } = await api.post("/cart", {
+          product_variant_id: productVariantId,
+          quantity,
+        });
+        this.updateTotals(data);
+      } catch (error) {
+        console.error("Erreur addToCart :", error.response?.data || error);
+      }
+    },
 
-        if (existing > -1) {
-            items.value[existing].quantity += product.quantity
-        } else {
-            items.value.push({ ...product })
-        }
+    // Mettre à jour la quantité d'un produit
+    async updateItem(cartItemId, quantity) {
+      try {
+        const { data } = await api.put(`/cart/${cartItemId}`, { quantity });
+        this.updateTotals(data);
+      } catch (error) {
+        console.error("Erreur updateItem :", error.response?.data || error);
+      }
+    },
 
-        saveToStorage()
-    }
-
-    function removeFromCart(index) {
-        items.value.splice(index, 1)
-        saveToStorage()
-    }
-
-    function updateQuantity(index, change) {
-        if (items.value[index]) {
-            items.value[index].quantity += change
-            if (items.value[index].quantity < 1) {
-                items.value[index].quantity = 1
-            }
-            saveToStorage()
-        }
-    }
-
-    function clearCart() {
-        items.value = []
-        saveToStorage()
-    }
-
-    function saveToStorage() {
-        localStorage.setItem('cart', JSON.stringify(items.value))
-    }
-
-    return {
-        items,
-        totalItems,
-        subtotal,
-        tax,
-        shipping,
-        total,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart
-    }
-})
+    // Supprimer un produit du panier
+    async removeItem(cartItemId) {
+      try {
+        const { data } = await api.delete(`/cart/${cartItemId}`);
+        this.updateTotals(data);
+      } catch (error) {
+        console.error("Erreur removeItem :", error.response?.data || error);
+      }
+    },
+  },
+});

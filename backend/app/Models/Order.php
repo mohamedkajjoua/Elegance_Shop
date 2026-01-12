@@ -20,6 +20,17 @@ class Order extends Model
       use HasFactory;
         use SoftDeletes;
 
+protected $fillable = [
+        'user_id',
+        'shipping_address_id',
+        'total_price',
+        'status',          
+        'payment_method',
+        'payment_status',
+        'notes'             
+    ];
+
+//Relations
 
     public function user():BelongsTo
     {
