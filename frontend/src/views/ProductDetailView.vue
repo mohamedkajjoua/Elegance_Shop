@@ -94,7 +94,6 @@ const selectedVariant = computed(() => {
   );
 });
 
-
 //slider images product
 const thumbnails = computed(() => {
   if (product.value?.images && product.value.images.length > 0) {
@@ -143,16 +142,16 @@ const addToCart = () => {
   }
 
   //  Appel correct au store avec l'ID du variant et la quantité
-  cartStore.addToCart(selectedVariant.value.id, quantity.value)
+  cartStore
+    .addToCart(selectedVariant.value.id, quantity.value)
     .then(() => {
-       alert("Product added to cart!");
+      alert("Product added to cart!");
     })
-    .catch((err) => {
+    .catch((err: any) => {
       console.error("Error adding to cart:", err);
       alert("Failed to add product to cart.");
     });
 };
-
 
 function toggleWishlist() {
   if (product.value) wishlistStore.toggleWishlist(product.value);
@@ -245,6 +244,38 @@ function submitReview() {
   currentSlide.value = 0;
   alert("Thank you for your review!");
 }
+
+const discountPercentage = computed(() => {
+  if (!currentVariantPrice.value.price || !currentVariantPrice.value.final_price) {
+    return 0;
+  }
+  return Math.round(
+    (1 - Number(currentVariantPrice.value.final_price) / Number(currentVariantPrice.value.price)) *
+      100
+  );
+});
+
+const currentPrice = computed(() => {
+  if (selectedVariant.value && selectedVariant.value.price) {
+    return Number(selectedVariant.value.price);
+  }
+
+  return Number(product.value?.final_price || 0);
+});
+
+const currentOriginalPrice = computed(() => {
+  return Number(product.value?.price || 0);
+});
+
+const currentDiscountPercent = computed(() => {
+  const price = currentPrice.value;
+  const original = currentOriginalPrice.value;
+
+  if (original > price && original > 0) {
+    return Math.round((1 - price / original) * 100);
+  }
+  return 0;
+});
 </script>
 
 <template>
@@ -302,18 +333,20 @@ function submitReview() {
           </p>
 
           <div class="flex items-center gap-4 mb-6">
-            <span class="text-2xl sm:text-3xl font-bold text-primary">${{ product.price }}</span>
+            <span class="text-2xl sm:text-3xl font-bold text-primary"> ${{ currentPrice }} </span>
+
             <span
-              v-if="product.originalPrice"
+              v-if="currentDiscountPercent > 0"
               class="text-lg sm:text-xl text-text-light line-through"
             >
-              ${{ product.originalPrice }}
+              ${{ currentOriginalPrice }}
             </span>
+
             <span
-              v-if="product.originalPrice"
+              v-if="currentDiscountPercent > 0"
               class="bg-danger text-white text-xs sm:text-sm px-2 py-1 rounded"
             >
-              {{ Math.round((1 - product.price / product.originalPrice) * 100) }}% OFF
+              {{ currentDiscountPercent }}% OFF
             </span>
           </div>
 

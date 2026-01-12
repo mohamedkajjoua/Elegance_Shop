@@ -70,7 +70,10 @@ function removeItem() {
           </button>
         </div>
 
-        <span class="cart-item-price">
+        <span v-if="item.discount" class="cart-item-price">
+          ${{ ((item.product_variant?.final_price || 0) * item.quantity).toFixed(2) }}
+        </span>
+        <span v-else class="cart-item-price">
           ${{ ((item.product_variant?.price || 0) * item.quantity).toFixed(2) }}
         </span>
       </div>
