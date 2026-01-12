@@ -29,12 +29,12 @@ export const useAdminBrandStore = defineStore("adminBrand", () => {
     error.value = null;
     try {
       await AdminBrandService.update(data, id);
-      // ✅ تحديث القائمة بعد التعديل لضمان مزامنة البيانات
+
       await fetchBrand();
     } catch (err: any) {
       console.error("failed to update brand");
       error.value = err.response?.data?.message || err.message;
-      throw err; // مهم جداً للصفحة التي تستدعي الدالة
+      throw err;
     } finally {
       isLoading.value = false;
     }

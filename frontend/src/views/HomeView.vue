@@ -3,6 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { getProductsList } from "@/data/products";
 import { useHomeStore } from "@/stores/user/HomeStore";
+import { useProductShopStore } from "@/stores/user/ProductShop";
+import { storeToRefs } from "pinia";
 
 const router = useRouter();
 //const featuredProducts = ref(getProductsList().slice(0, 8));
@@ -139,7 +141,7 @@ function goToProduct(id) {
               ></span>
               <span class="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
             </span>
-            Collection 2024 is here!
+            Collection 2026 is here!
           </div>
 
           <h1

@@ -8,9 +8,6 @@ import { setupRouterGuards } from "./router/guards";
 const app = createApp(App);
 
 app.use(createPinia());
-setupRouterGuards(router);
 app.use(router);
-
-//const cartStore = useCartStore()
-//cartStore.fetchCart()
+setupRouterGuards(router);
 app.mount("#app");
