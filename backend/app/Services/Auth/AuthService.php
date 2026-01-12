@@ -86,6 +86,75 @@ class AuthService
             ];
         }
     }
+    public function getAllUsers($perPage = 10)
+    {
+        try {
+            $users = User::paginate($perPage);
+            return [
+                'success' => true,
+                'data' => $users
+
+            ];
+        } catch (\Exception $err) {
+            return [
+                'success' => false,
+                'message' => 'Failed to fetch users' . $err->getMessage()
+            ];
+        }
+    }
+    public function delete($id)
+    {
+        $user = User::find($id);
+        if (!$user) return null;
+
+        return $user->delete();
+    }
+
+    public function update($id, $data)
+    {
+        $user = User::findOrFail($id);
+
+
+        if (isset($data['email']) && strtolower($data['email']) !== $user->email) {
+            $existingEmail = User::where('email', strtolower($data['email']))->first();
+            if ($existingEmail) {
+                throw new \Exception('Email already exists');
+            }
+            $data['email'] = strtolower($data['email']);
+        }
+
+
+        if (isset($data['password']) && !empty($data['password'])) {
+            $data['password'] = bcrypt($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
+
+        if (isset($data['avatar']) && $data['avatar'] instanceof \Illuminate\Http\UploadedFile) {
+
+
+            if ($user->avatar && \Storage::disk('public')->exists($user->avatar)) {
+                \Storage::disk('public')->delete($user->avatar);
+            }
+
+
+            $path = $data['avatar']->store('avatars', 'public');
+
+
+            $data['avatar'] = $path;
+        }
+
+
+        $user->update($data);
+
+        return $user;
+    }
+    public function getById($id)
+    {
+        return  User::findOrFail($id);
+    }
+
 
 
 

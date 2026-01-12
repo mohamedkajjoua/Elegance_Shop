@@ -36,11 +36,17 @@ Route::prefix('auth')->group(function () {
 
     Route::post('register', [AuthJWTController::class, 'register']);
     Route::post('login', [AuthJWTController::class, 'login']);
+    Route::get('users/{id}', [AuthJWTController::class, 'show']);
 
     Route::middleware('auth:api')->group(function () {
-        Route::post('logout', [AuthJWTController::class, 'logout']);
-        Route::post('refresh', [AuthJWTController::class, 'refresh']);
         Route::get('me', [AuthJWTController::class, 'me']);
+        Route::post('refresh', [AuthJWTController::class, 'refresh']);
+        Route::post('logout', [AuthJWTController::class, 'logout']);
+        Route::put('users/{id}', [AuthJWTController::class, 'update']);
+        Route::delete('users/{id}', [AuthJWTController::class, 'destroy']);
+
+        Route::get('users', [AuthJWTController::class, 'index'])
+            ->middleware('permission:view-users');
     });
 });
 

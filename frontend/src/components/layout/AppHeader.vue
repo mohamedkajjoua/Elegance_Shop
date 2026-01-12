@@ -1,3 +1,94 @@
+<script setup lang="ts">
+import { onMounted, ref, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useCartStore } from "@/stores/cart";
+import { useAuthStore } from "@/stores/auth/auth";
+
+const router = useRouter();
+const route = useRoute();
+const cartStore = useCartStore();
+const userStore = useAuthStore();
+
+const searchQuery = ref("");
+let searchTimeout: any = null;
+const showProfileDropdown = ref(false);
+const showMobileMenu = ref(false);
+const showMobileSearch = ref(false);
+
+onMounted(async () => {
+  if (userStore.token) {
+    await userStore.loadCurrentUser();
+    await cartStore.fetchCart();
+  }
+});
+
+function toggleProfileDropdown() {
+  showProfileDropdown.value = !showProfileDropdown.value;
+}
+
+function toggleMobileMenu() {
+  showMobileMenu.value = !showMobileMenu.value;
+}
+
+function toggleMobileSearch() {
+  showMobileSearch.value = !showMobileSearch.value;
+}
+
+function closeDropdown() {
+  showProfileDropdown.value = false;
+}
+
+const handleLogout = async () => {
+  if (confirm("Are you sure you want to logout?")) {
+    await userStore.logout();
+    router.push("/login");
+  }
+};
+
+function clearSearch() {
+  searchQuery.value = "";
+  if (route.path === "/shop") {
+    router.push({ path: "/shop" });
+  }
+}
+
+const handleSearch = () => {
+  if (searchQuery.value.length > 0 && searchQuery.value.length < 2) {
+    return;
+  }
+
+  if (!searchQuery.value && route.path === "/shop") {
+    router.push({ path: "/shop" });
+    return;
+  }
+
+  if (searchQuery.value.length >= 2) {
+    router.push({
+      path: "/shop",
+      query: { q: searchQuery.value },
+    });
+    showMobileSearch.value = false;
+  }
+};
+
+watch(
+  () => route.query.q,
+  (newQ) => {
+    searchQuery.value = (newQ as string) || "";
+  },
+  { immediate: true }
+);
+
+watch(searchQuery, (newVal) => {
+  clearTimeout(searchTimeout);
+  if (newVal.length >= 2) {
+    searchTimeout = setTimeout(() => {
+      handleSearch();
+    }, 500);
+  }
+});
+</script>
+
 <template>
   <header
     class="header flex items-center justify-between py-2.5 sm:py-4 md:py-5 px-3 sm:px-6 md:px-8 my-2 sm:my-4 md:my-5 bg-card-bg rounded-xl sm:rounded-2xl shadow-sm gap-2 sm:gap-4"
@@ -23,32 +114,28 @@
     <nav class="hidden lg:flex items-center gap-1">
       <router-link
         to="/"
-        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg"
         active-class="text-primary bg-primary/10"
+        >Home</router-link
       >
-        Home
-      </router-link>
       <router-link
         to="/shop"
-        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg"
         active-class="text-primary bg-primary/10"
+        >Shop</router-link
       >
-        Shop
-      </router-link>
       <router-link
         to="/about"
-        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg"
         active-class="text-primary bg-primary/10"
+        >About</router-link
       >
-        About
-      </router-link>
       <router-link
         to="/contact"
-        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+        class="nav-link px-4 py-2 text-sm font-medium text-text-light hover:text-primary transition-colors rounded-lg"
         active-class="text-primary bg-primary/10"
+        >Contact</router-link
       >
-        Contact
-      </router-link>
     </nav>
 
     <div
@@ -64,19 +151,18 @@
       />
       <i
         v-show="searchQuery"
-        class="fa-solid fa-xmark text-text-light cursor-pointer hover:text-danger transition-colors"
+        class="fa-solid fa-xmark text-text-light cursor-pointer hover:text-danger"
         @click="clearSearch"
       ></i>
     </div>
 
     <div class="header-actions flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
       <button
-        class="md:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-text-light hover:text-primary transition-colors rounded-lg hover:bg-background"
+        class="md:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-text-light hover:text-primary"
         @click="toggleMobileSearch"
       >
         <i class="fa-solid fa-magnifying-glass text-sm sm:text-base"></i>
       </button>
-
       <router-link
         to="/wishlist"
         class="action-btn hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors"
@@ -87,267 +173,148 @@
 
       <router-link
         to="/cart"
-        class="action-btn cart-btn flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors relative"
+        class="action-btn cart-btn flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg relative"
       >
         <i class="fa-solid fa-cart-shopping"></i>
         <span class="hidden lg:inline">Cart</span>
         <span
           v-show="cartStore.totalItems > 0"
-          class="cart-badge absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 bg-danger text-white text-[9px] sm:text-[10px] font-bold min-w-[16px] sm:min-w-[18px] h-4 sm:h-[18px] rounded-full flex items-center justify-center"
+          class="cart-badge absolute -top-1 -right-1 bg-danger text-white text-[9px] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center"
         >
           {{ cartStore.totalItems }}
         </span>
       </router-link>
 
-      <div v-if="authStore.isAuthenticated" class="user-profile-wrapper relative" @click.stop>
+      <div v-if="userStore.isAuthenticated" class="user-profile-wrapper relative" @click.stop>
         <div class="user-profile cursor-pointer" @click="toggleProfileDropdown">
           <img
-            :src="userStore.profile.avatar"
-            :alt="userStore.profile.name"
+            :src="
+              userStore.user?.avatar
+                ? `http://localhost:8000/storage/${userStore.user.avatar}`
+                : `https://ui-avatars.com/api/?name=${userStore.user?.first_name}`
+            "
             class="user-avatar w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full border-2 border-transparent hover:border-primary transition-colors"
           />
         </div>
 
         <div
           :class="[
-            'profile-dropdown absolute top-[calc(100%+8px)] sm:top-[calc(100%+12px)] right-0 bg-card-bg rounded-xl shadow-lg min-w-[200px] sm:min-w-[220px] transition-all duration-200 z-50 border border-border',
-            showProfileDropdown ? 'active' : 'opacity-0 invisible -translate-y-2.5',
+            'profile-dropdown absolute top-[calc(100%+8px)] right-0 bg-card-bg rounded-xl shadow-lg min-w-[200px] transition-all duration-200 z-50 border border-border',
+            showProfileDropdown
+              ? 'opacity-100 visible translate-y-0'
+              : 'opacity-0 invisible -translate-y-2.5',
           ]"
         >
-          <div class="profile-dropdown-header p-3 sm:p-4 border-b border-border">
-            <h4 class="text-sm font-bold mb-1 truncate">{{ userStore.profile.name }}</h4>
-            <p class="text-xs text-text-light truncate">{{ userStore.profile.email }}</p>
+          <div
+            v-if="userStore.user"
+            class="profile-dropdown-header p-3 sm:p-4 border-b border-border"
+          >
+            <h4 class="text-sm font-bold mb-1 truncate">
+              {{ userStore.user.first_name }} {{ userStore.user.last_name }}
+            </h4>
+            <p class="text-xs text-text-light truncate">{{ userStore.user.email }}</p>
           </div>
+
           <div class="profile-dropdown-menu p-1.5 sm:p-2 flex flex-col gap-0.5 sm:gap-1">
             <router-link
-              to="/profile"
-              class="profile-dropdown-item flex items-center gap-3 p-2.5 sm:p-3 rounded-lg text-sm text-text hover:bg-background transition-colors w-full text-left"
+              :to="`/profile/${userStore.user.id}`"
+              class="profile-dropdown-item flex items-center gap-3 p-2.5 rounded-lg text-sm text-text hover:bg-background"
               @click="closeDropdown"
             >
-              <i class="fa-solid fa-user w-4 text-center"></i> My Account
+              <i class="fa-solid fa-user w-4"></i> My Account
             </router-link>
             <router-link
               to="/orders"
-              class="profile-dropdown-item flex items-center gap-3 p-2.5 sm:p-3 rounded-lg text-sm text-text hover:bg-background transition-colors w-full text-left"
+              class="profile-dropdown-item flex items-center gap-3 p-2.5 rounded-lg text-sm text-text hover:bg-background"
               @click="closeDropdown"
             >
-              <i class="fa-solid fa-box w-4 text-center"></i> My Orders
+              <i class="fa-solid fa-box w-4"></i> My Orders
             </router-link>
+
             <router-link
-              to="/wishlist"
-              class="profile-dropdown-item sm:hidden flex items-center gap-3 p-2.5 rounded-lg text-sm text-text hover:bg-background transition-colors w-full text-left"
-              @click="closeDropdown"
+              v-if="userStore.isAdmin"
+              to="/admin"
+              class="profile-dropdown-item flex items-center gap-3 p-2.5 rounded-lg text-sm text-text hover:bg-background"
             >
-              <i class="fa-solid fa-heart w-4 text-center"></i> Wishlist
+              <i class="fa-solid fa-right-from-bracket mr-2"></i> Switch to User
             </router-link>
-            <hr class="my-1.5 sm:my-2 border-t border-border" />
+
+            <hr class="my-1.5 border-t border-border" />
             <button
               @click="handleLogout"
-              :disabled="authStore.isLoading"
-              class="profile-dropdown-item danger flex items-center gap-3 p-2.5 sm:p-3 rounded-lg text-sm text-danger hover:bg-red-50 transition-colors w-full text-left"
+              :disabled="userStore.isLoading"
+              class="profile-dropdown-item flex items-center gap-3 p-2.5 rounded-lg text-sm text-danger hover:bg-red-50 w-full text-left"
             >
-              <i class="fa-solid fa-right-from-bracket w-4 text-center"></i> Logout
+              <i class="fa-solid fa-right-from-bracket w-4"></i> Logout
             </button>
           </div>
         </div>
       </div>
-      <div v-else class="flex items-center gap-3">
-        <router-link to="/login" class="px-4 py-2 text-gray-600 hover:text-indigo-600 font-medium">
-          Login
-        </router-link>
 
+      <div v-else class="flex items-center gap-2">
+        <router-link
+          to="/login"
+          class="px-3 sm:px-4 py-2 text-sm sm:text-base text-gray-600 font-medium"
+          >Login</router-link
+        >
         <router-link
           to="/register"
-          class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          class="px-3 sm:px-4 py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          >Register</router-link
         >
-          Register
-        </router-link>
       </div>
     </div>
   </header>
 
   <div
     v-show="showMobileSearch"
-    class="md:hidden bg-card-bg mx-2 sm:mx-4 mb-3 rounded-xl p-3 shadow-sm animate-fade-in"
+    class="md:hidden bg-card-bg mx-2 mb-3 rounded-xl p-3 shadow-sm animate-fade-in"
   >
-    <div
-      class="flex items-center gap-3 bg-background px-3 py-2.5 rounded-lg border border-transparent focus-within:border-primary transition-colors"
-    >
+    <div class="flex items-center gap-3 bg-background px-3 py-2.5 rounded-lg">
       <i class="fa-solid fa-magnifying-glass text-text-light text-sm"></i>
       <input
         v-model="searchQuery"
         type="text"
         placeholder="Search products..."
-        class="bg-transparent flex-1 outline-none text-sm text-text placeholder-text-light"
+        class="bg-transparent flex-1 outline-none text-sm"
         @keyup.enter="handleSearch"
       />
-      <i
-        v-show="searchQuery"
-        class="fa-solid fa-xmark text-text-light cursor-pointer hover:text-danger transition-colors"
-        @click="clearSearch"
-      ></i>
-      <button class="text-text-light hover:text-text text-sm ml-1" @click="toggleMobileSearch">
-        Cancel
-      </button>
+      <button class="text-text-light text-sm" @click="toggleMobileSearch">Cancel</button>
     </div>
   </div>
 
   <div
     v-show="showMobileMenu"
-    class="lg:hidden bg-card-bg mx-2 sm:mx-4 mb-3 rounded-xl shadow-sm animate-fade-in overflow-hidden"
+    class="lg:hidden bg-card-bg mx-2 mb-3 rounded-xl shadow-sm animate-fade-in overflow-hidden"
   >
     <nav class="flex flex-col p-2">
       <router-link
         to="/"
-        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        class="flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-primary/5 rounded-lg"
         @click="showMobileMenu = false"
+        >Home</router-link
       >
-        <i class="fa-solid fa-home w-5 text-center"></i>
-        Home
-      </router-link>
       <router-link
         to="/shop"
-        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        class="flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-primary/5 rounded-lg"
         @click="showMobileMenu = false"
+        >Shop</router-link
       >
-        <i class="fa-solid fa-store w-5 text-center"></i>
-        Shop
-      </router-link>
-      <router-link
-        to="/about"
-        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-        @click="showMobileMenu = false"
-      >
-        <i class="fa-solid fa-info-circle w-5 text-center"></i>
-        About
-      </router-link>
-      <router-link
-        to="/contact"
-        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-        @click="showMobileMenu = false"
-      >
-        <i class="fa-solid fa-envelope w-5 text-center"></i>
-        Contact
-      </router-link>
       <hr class="my-2 border-border" />
       <router-link
         to="/wishlist"
-        class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+        class="flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-primary/5 rounded-lg"
         @click="showMobileMenu = false"
+        >Wishlist</router-link
       >
-        <i class="fa-solid fa-heart w-5 text-center"></i>
-        Wishlist
-      </router-link>
     </nav>
   </div>
 </template>
-
-<script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-import { useRouter, useRoute } from "vue-router"; // Added useRoute
-import { useCartStore } from "@/stores/cart";
-import { useAuthStore } from "@/stores/auth/auth";
-import { useUserStore } from "@/stores/user";
-
-const router = useRouter();
-const route = useRoute(); // To sync input with URL
-const cartStore = useCartStore();
-
-const authStore = useAuthStore();
-const userStore = useUserStore();
-
-const searchQuery = ref("");
-let searchTimeout: any = null;
-const showProfileDropdown = ref(false);
-const showMobileMenu = ref(false);
-const showMobileSearch = ref(false);
-
-onMounted(() => {
-  if (authStore.token) {
-    cartStore.fetchCart();
-  }
-});
-
-function toggleProfileDropdown() {
-  showProfileDropdown.value = !showProfileDropdown.value;
-}
-
-function toggleMobileMenu() {
-  showMobileMenu.value = !showMobileMenu.value;
-}
-
-function toggleMobileSearch() {
-  showMobileSearch.value = !showMobileSearch.value;
-}
-
-function closeDropdown() {
-  showProfileDropdown.value = false;
-}
-
-const handleLogout = async () => {
-  if (confirm("Are you sure you want to logout?")) {
-    await authStore.logout();
-    router.push("/login");
-  }
-};
-
-function clearSearch() {
-  searchQuery.value = "";
-  // Optional: If you want clearing search to also return to all products
-  if (route.path === "/shop") {
-    router.push({ path: "/shop" });
-  }
-}
-
-//  Corrected Handle Search (Redirects instead of Fetching)
-const handleSearch = () => {
-  // If search is too short, do nothing (or show error)
-  if (searchQuery.value.length > 0 && searchQuery.value.length < 2) {
-    return;
-  }
-
-  // If empty and on shop page, reset
-  if (!searchQuery.value && route.path === "/shop") {
-    router.push({ path: "/shop" });
-    return;
-  }
-
-  // Redirect to Shop page with Query
-  if (searchQuery.value.length >= 2) {
-    router.push({
-      path: "/shop",
-      query: { q: searchQuery.value },
-    });
-    // Close mobile search if open
-    showMobileSearch.value = false;
-  }
-};
-
-// Sync Input with URL (e.g. on page refresh)
-watch(
-  () => route.query.q,
-  (newQ) => {
-    searchQuery.value = (newQ as string) || "";
-  },
-  { immediate: true }
-);
-
-// Auto-search Debounce (Now pushes to router)
-watch(searchQuery, (newVal) => {
-  clearTimeout(searchTimeout);
-  if (newVal.length >= 2) {
-    searchTimeout = setTimeout(() => {
-      handleSearch();
-    }, 500);
-  }
-});
-</script>
 
 <style scoped>
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
 }
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -357,5 +324,14 @@ watch(searchQuery, (newVal) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+/* Dropdown animation class */
+.profile-dropdown {
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+.profile-dropdown.opacity-100 {
+  transform: translateY(0);
+  pointer-events: auto;
 }
 </style>

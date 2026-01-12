@@ -65,6 +65,36 @@ class AuthService {
       return this.handleError(error, "Failed to fetch user");
     }
   }
+  async getUserById(id: number): Promise<any> {
+    const response = await api.get(`/auth/users/${id}`);
+    return response.data;
+  }
+
+  async getAllUsers(page: number = 1, perPage: number = 10): Promise<any> {
+    try {
+      const response = await api.get("/auth/users", {
+        params: {
+          page: page,
+          per_page: perPage,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return this.handleError(error, "Failed to fetch users list");
+    }
+  }
+  async delete(id: number) {
+    return api.delete(`/auth/users/${id}`);
+  }
+  async updateUser(id: number, data: FormData | object) {
+    const response = await api.post(`/auth/users/${id}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data;
+  }
   //Token renewal
   async refreshToken(): Promise<IAuthResponse> {
     try {
