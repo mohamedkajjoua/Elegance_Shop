@@ -14,6 +14,15 @@ class Addresse extends Model
 {
      use HasFactory;
       use SoftDeletes;
+        protected $fillable = [
+        'user_id',
+        'country',
+        'city',
+        'street',
+         'post_code',
+         'phone',
+
+    ];
 
     public function user():BelongsTo
     {

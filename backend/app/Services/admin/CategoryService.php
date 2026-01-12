@@ -12,6 +12,7 @@ class CategoryService
         return Category::query()
             ->select(['id', 'name'])
             ->select(['id', 'name', 'created_at'])
+            ->withCount('products')
             ->orderBy('name', 'asc')
             ->get();
     }

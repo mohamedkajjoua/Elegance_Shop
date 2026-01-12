@@ -13,6 +13,7 @@ use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,7 +94,11 @@ Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
-        //
+
+        Route::post('/', [CategoryController::class, 'store']);
+        Route::put('/{id}', [CategoryController::class, 'update']);
+        Route::get('/{id}', [CategoryController::class, 'show']);
+        Route::delete('/{id}', [CategoryController::class, 'destroy']);
     });
 });
 
@@ -107,7 +112,10 @@ Route::prefix('brands')->group(function () {
     Route::get('/', [BrandController::class, 'index']);
 
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
-        //
+        Route::post('/', [BrandController::class, 'store']);
+        Route::put('/{id}', [BrandController::class, 'update']);
+        Route::get('/{id}', [BrandController::class, 'show']);
+        Route::delete('/{id}', [BrandController::class, 'destroy']);
     });
 });
 /*|--------------------------------------------------------------------------
@@ -143,7 +151,7 @@ Route::prefix('home')->group(function () {
 });
 /*
 |--------------------------------------------------------------------------
-| cart Routes
+| orders Routes
 |--------------------------------------------------------------------------
 */
 
@@ -154,3 +162,24 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/orders', [OrderController::class, 'index']);      // Order History
     Route::get('/orders/{id}', [OrderController::class, 'show']);  // Order Details
 });
+
+Route::get('/order-pdf/{id}', function($id) {
+    $order = App\Models\Order::with('orderItems.productVariant.product', 'user', 'shippingAddress')->findOrFail($id);
+    $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('emails.invoice_pdf', compact('order'));
+    return $pdf->stream('order-'.$order->id.'.pdf');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| adresses Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+});
+
+
+
