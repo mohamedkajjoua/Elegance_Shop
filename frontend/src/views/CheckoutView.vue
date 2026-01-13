@@ -10,6 +10,9 @@ const router = useRouter();
 const cartStore = useCartStore();
 const userStore = useUserStore();
 
+// ✅ FIX 1: Define BASE_URL so the image function works
+const BASE_URL = "http://127.0.0.1:8000";
+
 const breadcrumbItems = [{ label: "Checkout" }];
 
 // form  Shipping
@@ -31,7 +34,25 @@ const shippingOptions = [
   { id: "overnight", name: "Overnight Shipping", price: 50, days: "1 business day" },
 ];
 
-// function   pour enregistrer Address
+// ✅ FIX 2: Moved getImageUrl OUT of proceedToPayment so the template can use it
+const getImageUrl = (img) => {
+  if (!img) return "/images/placeholder.jpg";
+
+  // If we pass the whole image object
+  if (typeof img === "object" && img.url) {
+    return img.url;
+  }
+
+  // If backend returns partial path
+  const path = typeof img === "object" ? img.image_url || img.url : img;
+
+  if (!path) return "/images/placeholder.jpg";
+  if (path.startsWith("http")) return path;
+
+  return `${BASE_URL}/storage/${path.replace(/^\//, "")}`;
+};
+
+// function  pour enregistrer Address
 async function proceedToPayment() {
   // validation
   if (
@@ -64,21 +85,6 @@ async function proceedToPayment() {
     console.error(error);
     alert("Error while saving address");
   }
-  const getImageUrl = (img) => {
-    if (!img) return "/images/placeholder.jpg";
-
-    if (typeof img === "object" && img.url) {
-      return img.url;
-    }
-
-    const path = typeof img === "object" ? img.image_url : img;
-
-    if (!path) return "/images/placeholder.jpg";
-
-    if (path.startsWith("http")) return path;
-
-    return `${BASE_URL}/storage/${path.replace(/^\//, "")}`;
-  };
 }
 </script>
 
@@ -87,7 +93,6 @@ async function proceedToPayment() {
     <Breadcrumb :items="breadcrumbItems" />
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-      <!-- Checkout Form -->
       <div class="lg:col-span-2">
         <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 mb-4 md:mb-6">
           <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6">Shipping Information</h2>
@@ -161,7 +166,6 @@ async function proceedToPayment() {
           </form>
         </div>
 
-        <!-- Shipping Method -->
         <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
           <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6">Shipping Method</h2>
           <div class="space-y-4">
@@ -193,20 +197,17 @@ async function proceedToPayment() {
         </div>
       </div>
 
-      <!-- Order Summary -->
       <div class="lg:col-span-1">
         <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 sticky top-5">
           <h3 class="text-lg md:text-xl font-bold mb-4 md:mb-6">Order Summary</h3>
 
           <div class="space-y-4 mb-6">
             <div v-for="item in cartStore.items" :key="item.id" class="flex gap-4">
-              <pre>
-                {{ item }}
-              </pre>
               <div class="flex-1">
                 <img
-                  :src="getImageUrl(item.image.image_url)"
+                  :src="getImageUrl(item.product_variant?.product?.images?.[0])"
                   :alt="item.product_variant?.product?.name"
+                  class="w-16 h-16 object-cover rounded-lg mb-2"
                 />
                 <p class="font-medium text-sm">{{ item.product_variant?.product?.name }}</p>
                 <p class="text-xs text-text-light">
