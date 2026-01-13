@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedInteger('quantity')->default(1);
             $table->timestamps();
             $table->softDeletes();
-        $table->unique(['cart_id', 'product_variant_id']);
+        // $table->unique(['cart_id', 'product_variant_id']);
 
 });
     }

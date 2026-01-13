@@ -23,7 +23,7 @@ class OrderConfirmationMail extends Mailable
     public function build()
     {
         return $this->subject("Commande - Elegance Shop")
-            ->view('emails.order_confirmation') // Blade email
+            ->view('emails.order_confirmation') 
             ->attachData(
                 $this->pdf->output(),
                 "facture.pdf"
