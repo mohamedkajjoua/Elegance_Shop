@@ -116,6 +116,8 @@ const selectedColor = ref("");
 const selectedSize = ref("");
 const quantity = ref(1);
 const activeTab = ref("description");
+// ADDED: State for stock message
+const stockAlert = ref("");
 
 // --- Methods ---
 
@@ -125,10 +127,33 @@ function changeImage(src: string) {
 
 function selectColor(color: string) {
   selectedColor.value = color;
+  // Reset size and alert when color changes
+  selectedSize.value = "";
+  stockAlert.value = "";
 }
 
+// MODIFIED: Function to check stock when selecting size
 function selectSize(size: string) {
-  selectedSize.value = size;
+  stockAlert.value = ""; // Reset alert
+
+  if (!selectedColor.value) {
+    alert("Please select a color first");
+    return;
+  }
+
+  // Find the variant for this color + size
+  const variant = product.value.variants?.find(
+    (v: any) => v.color === selectedColor.value && v.size === size
+  );
+
+  // Check if variant exists and has stock (assuming property is 'stock')
+  if (variant && variant.stock > 0) {
+    selectedSize.value = size;
+  } else {
+    // Show the message requested
+    stockAlert.value = "This is not in stock comming soon";
+    selectedSize.value = ""; // Prevent selection
+  }
 }
 
 function updateQty(change: number) {
@@ -246,12 +271,13 @@ function submitReview() {
 }
 
 const discountPercentage = computed(() => {
-  if (!currentVariantPrice.value.price || !currentVariantPrice.value.final_price) {
+  // Fix: changed 'currentVariantPrice' to 'selectedVariant' as per your earlier code
+  // assuming you want to use the computed property defined earlier
+  if (!selectedVariant.value || !selectedVariant.value.price || !product.value.final_price) {
     return 0;
   }
   return Math.round(
-    (1 - Number(currentVariantPrice.value.final_price) / Number(currentVariantPrice.value.price)) *
-      100
+    (1 - Number(product.value.final_price) / Number(selectedVariant.value.price)) * 100
   );
 });
 
@@ -372,7 +398,7 @@ const currentDiscountPercent = computed(() => {
             <h3 class="text-sm font-semibold mb-3">
               Size: <span class="text-text-light">{{ selectedSize }}</span>
             </h3>
-            <div class="flex gap-3">
+            <div class="flex gap-3 flex-wrap">
               <button
                 v-for="size in availableSizes"
                 :key="size"
@@ -387,6 +413,9 @@ const currentDiscountPercent = computed(() => {
                 {{ size }}
               </button>
             </div>
+            <p v-if="stockAlert" class="mt-2 text-red-500 text-sm font-semibold">
+              {{ stockAlert }}
+            </p>
           </div>
 
           <div class="mb-8">
@@ -409,14 +438,20 @@ const currentDiscountPercent = computed(() => {
                   <i class="fa-solid fa-plus"></i>
                 </button>
               </div>
-              <span class="text-text-light text-sm">Only 12 items left</span>
+              <span
+                v-if="selectedVariant && selectedVariant.stock < 12 && selectedVariant.stock > 0"
+                class="text-text-light text-sm"
+              >
+                Only {{ selectedVariant.stock }} items left
+              </span>
             </div>
           </div>
 
           <div class="flex gap-4">
             <button
-              class="flex-1 bg-primary text-white py-4 px-8 rounded-xl font-bold text-lg hover:bg-primary-dark transition-colors"
+              class="flex-1 bg-primary text-white py-4 px-8 rounded-xl font-bold text-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               @click="addToCart"
+              :disabled="!!stockAlert || !selectedSize"
             >
               Add to Cart
             </button>
