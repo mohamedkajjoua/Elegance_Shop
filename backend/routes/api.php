@@ -14,6 +14,7 @@ use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\admin\AdminOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -118,6 +119,22 @@ Route::prefix('brands')->group(function () {
         Route::delete('/{id}', [BrandController::class, 'destroy']);
     });
 });
+
+
+
+
+
+Route::middleware(['auth:api', 'role:admin,editor'])
+    ->prefix('admin')
+    ->group(function () {
+
+        Route::get('/orders', [AdminOrderController::class, 'index']);
+        Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
+        Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+
+    });
+
+
 /*|--------------------------------------------------------------------------
 | Settings Routes
 |--------------------------------------------------------------------------*/
