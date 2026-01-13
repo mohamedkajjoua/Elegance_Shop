@@ -7,6 +7,7 @@ use App\Services\admin\AdminOrderService;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\JsonResponse;
 
 class AdminOrderController extends Controller
 {
@@ -48,28 +49,42 @@ class AdminOrderController extends Controller
 
       //Cancel order
 
-    public function cancel($id)
+    public function cancel($orderId): JsonResponse
     {
-        $order = Order::findOrFail($id);
-
+        $order = Order::findOrFail($orderId);
+       try {
         $this->orderService->cancelOrder($order);
 
         return response()->json([
             'success' => true,
-            'message' => 'Order cancelled successfully'
+            'message' => 'Order cancelled and stock reverted successfully',
+            'order' => $order
         ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
-        public function refund($id)
+     public function refund(int $orderId): JsonResponse
     {
-        $order = Order::findOrFail($id);
+        $order = Order::findOrFail($orderId);
 
-        $this->orderService->refundOrder($order);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order refunded successfully'
-        ]);
+        try {
+            $this->orderService->refundOrder($order);
+            return response()->json([
+                'success' => true,
+                'message' => 'Order refunded successfully',
+                'order' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
 
