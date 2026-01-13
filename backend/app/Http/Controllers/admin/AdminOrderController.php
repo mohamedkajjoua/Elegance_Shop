@@ -5,6 +5,8 @@ namespace App\Http\Controllers\admin;
 use App\Http\Controllers\Controller;
 use App\Services\admin\AdminOrderService;
 use Illuminate\Http\Request;
+use App\Models\Order;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminOrderController extends Controller
 {
@@ -41,6 +43,75 @@ class AdminOrderController extends Controller
         return response()->json(
             $this->orderService->updateStatus($id, $request->status)
         );
+    }
+
+
+      //Cancel order
+
+    public function cancel($id)
+    {
+        $order = Order::findOrFail($id);
+
+        $this->orderService->cancelOrder($order);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancelled successfully'
+        ]);
+    }
+
+        public function refund($id)
+    {
+        $order = Order::findOrFail($id);
+
+        $this->orderService->refundOrder($order);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order refunded successfully'
+        ]);
+    }
+
+
+    public function exportCsv()
+    {
+        $orders = $this->orderService->getOrdersForExport();
+
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=orders.csv",
+        ];
+
+        $callback = function () use ($orders) {
+            $file = fopen('php://output', 'w');
+
+            // CSV Header
+            fputcsv($file, [
+                'Order ID',
+                'User Email',
+                'Total Price',
+                'Status',
+                'Payment Method',
+                'Payment Status',
+                'Created At'
+            ]);
+
+            foreach ($orders as $order) {
+                fputcsv($file, [
+                    $order->id,
+                    $order->user->email ?? '',
+                    $order->total_price,
+                    $order->status,
+                    $order->payment_method,
+                    $order->payment_status,
+                    $order->created_at
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
     }
 }
 

@@ -3,6 +3,7 @@ namespace App\Services\admin;
 
 use App\Models\Order;
 
+
 class AdminOrderService
 {
     //  List all orders
@@ -35,4 +36,44 @@ class AdminOrderService
             'order' => $order
         ];
     }
+// cancel Order
+
+public function cancelOrder(Order $order): Order
+    {
+        if ($order->status === 'delivered') {
+            throw new Exception('Delivered orders cannot be cancelled');
+        }
+
+        $order->update([
+            'status' => 'cancelled'
+        ]);
+
+        return $order;
+    }
+// refund Order
+    public function refundOrder(Order $order): Order
+    {
+        if ($order->payment_status !== 'paid') {
+            throw new Exception('Order is not paid');
+        }
+
+        if ($order->status !== 'cancelled') {
+            throw new Exception('Order must be cancelled first');
+        }
+
+
+
+        $order->update([
+            'payment_status' => 'refunded'
+        ]);
+
+        return $order;
+    }
+// get Orders For Export
+
+     public function getOrdersForExport()
+    {
+        return Order::with('user')->orderBy('created_at', 'desc')->get();
+    }
+
 }

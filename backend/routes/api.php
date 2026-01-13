@@ -130,7 +130,11 @@ Route::prefix('brands')->group(function () {
 
 
 
-
+/*
+|--------------------------------------------------------------------------
+| Admin Order Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware(['auth:api', 'role:admin,editor'])
     ->prefix('admin')
@@ -139,6 +143,10 @@ Route::middleware(['auth:api', 'role:admin,editor'])
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+
+        Route::post('/orders/{id}/cancel', [AdminOrderController::class, 'cancel']);
+        Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
+        Route::get('/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
 
     });
 
