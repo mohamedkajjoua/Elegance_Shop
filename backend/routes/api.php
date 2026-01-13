@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
+use App\Http\Controllers\user\WishlistController;
 
 
 /*
@@ -142,4 +143,19 @@ Route::prefix('home')->group(function () {
     Route::middleware(['auth:api',])->group(function () {
         //
     });
+});
+
+/*|--------------------------------------------------------------------------
+
+| Wishlist Routes
+
+|--------------------------------------------------------------------------*/
+
+Route::middleware('auth:api')->group(function () {
+
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+
+    Route::post('/wishlist/toggle', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
+
 });
