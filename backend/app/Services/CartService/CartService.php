@@ -38,27 +38,35 @@ class CartService
     /**
      * Ajouter un produit
      */
+
+
     public function add(int $userId, int $variantId, int $quantity): Cart
-    {
-        $cart = $this->getUserCart($userId);
+{
+    $cart = $this->getUserCart($userId);
 
-        $item = CartItem::where('cart_id', $cart->id)
-            ->where('product_variant_id', $variantId)
-            ->first();
+    $item = CartItem::withTrashed()
+        ->where('cart_id', $cart->id)
+        ->where('product_variant_id', $variantId)
+        ->first();
 
-        if ($item) {
-            $item->increment('quantity', $quantity);
+    if ($item) {
+        if ($item->trashed()) {
+            $item->restore();
+            $item->update(['quantity' => $quantity]);
         } else {
-            CartItem::create([
-                'cart_id' => $cart->id,
-                'product_variant_id' => $variantId,
-                'quantity' => $quantity
-            ]);
+            $item->increment('quantity', $quantity);
         }
-
-        // ✅ تم التعديل: أضفنا .images لكي تظهر الصورة فور الإضافة
-        return $cart->load('cartItems.productVariant.product.images');
+    } else {
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_variant_id' => $variantId,
+            'quantity' => $quantity
+        ]);
     }
+
+    return $cart->load('cartItems.productVariant.product.images');
+}
+
 
     /**
      * Modifier la quantité

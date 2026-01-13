@@ -1,55 +1,63 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Breadcrumb from '@/components/layout/Breadcrumb.vue'
+import api from '@/services/api'
 
 const breadcrumbItems = [{ label: 'My Orders' }]
-
 const activeTab = ref('all')
-
-const orders = ref([
-  {
-    id: 'ORD-ABC123',
-    date: 'Dec 15, 2024',
-    status: 'delivered',
-    total: 350,
-    items: [
-      { title: 'Brooklyn-NYC Sweatshirt', size: 'L', color: 'Black', image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=200', price: 200 },
-      { title: 'Basic Plain Shirt', size: 'M', color: 'White', image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=200', price: 150 }
-    ]
-  },
-  {
-    id: 'ORD-DEF456',
-    date: 'Dec 10, 2024',
-    status: 'shipping',
-    total: 200,
-    items: [
-      { title: 'Orange Sweatshirt', size: 'XL', color: 'Orange', image: 'https://images.unsplash.com/photo-1620799140408-ed5341cd2431?w=200', price: 200 }
-    ]
-  },
-  {
-    id: 'ORD-GHI789',
-    date: 'Dec 5, 2024',
-    status: 'processing',
-    total: 425,
-    items: [
-      { title: 'Flowers Printed Sweatshirt', size: 'M', color: 'Multi', image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=200', price: 225 },
-      { title: 'Line Pattern Zipper', size: 'L', color: 'Black', image: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=200', price: 200 }
-    ]
-  }
-])
+const orders = ref([])
 
 const statusColors = {
-  delivered: 'bg-success/10 text-success',
-  shipping: 'bg-warning/10 text-warning',
+  pending: 'bg-primary/10 text-primary',
   processing: 'bg-primary/10 text-primary',
+  shipping: 'bg-warning/10 text-warning',
+  delivered: 'bg-success/10 text-success',
   cancelled: 'bg-danger/10 text-danger'
 }
+
+/**
+ * Fetch orders + details
+ */
+const fetchOrders = async () => {
+  try {
+    const { data } = await api.get('/orders')
+
+    const mappedOrders = await Promise.all(
+      data.orders.map(async (order) => {
+        const detailsRes = await api.get(`/orders/${order.id}`)
+
+        return {
+          id: `ORD-${order.id}`,
+          date: new Date(order.created_at).toLocaleDateString(),
+          status: order.status,
+          total: Number(order.total_price),
+          items: detailsRes.data.order.items.map(item => ({
+            title: item.product_name,
+            size: item.variant?.split(' / ')[0] || '',
+            color: item.variant?.split(' / ')[1] || '',
+            image: 'https://via.placeholder.com/150',
+            price: Number(item.price)
+          }))
+        }
+      })
+    )
+
+    orders.value = mappedOrders
+  } catch (error) {
+    console.error('Error fetching orders', error)
+  }
+}
+
+
+
+onMounted(fetchOrders)
 
 const filteredOrders = (status) => {
   if (status === 'all') return orders.value
   return orders.value.filter(o => o.status === status)
 }
 </script>
+
 
 <template>
   <div class="pb-12">
@@ -117,9 +125,8 @@ const filteredOrders = (status) => {
           </div>
 
           <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 p-3 sm:p-4 border-t border-border">
-            <button class="w-full sm:w-auto px-3 sm:px-4 py-2 border border-border rounded-lg text-xs sm:text-sm font-medium hover:border-primary hover:text-primary transition-colors">
-              View Details
-            </button>
+    
+
             <button
               v-if="order.status === 'delivered'"
               class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-primary text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-primary-dark transition-colors"

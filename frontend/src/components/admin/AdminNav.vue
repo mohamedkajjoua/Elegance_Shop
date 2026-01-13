@@ -211,15 +211,6 @@ watch(() => route.path, checkActiveMenu, { immediate: true });
           <i class="fa-solid fa-users w-5"></i>
           <span>User List</span>
         </router-link>
-
-        <router-link
-          to="/admin/profile"
-          active-class="bg-orange-500/10 text-orange-500 border-orange-500"
-          class="flex items-center gap-3 px-5 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors border-l-4 border-transparent"
-        >
-          <i class="fa-solid fa-user w-5"></i>
-          <span>Profile</span>
-        </router-link>
       </nav>
     </aside>
   </div>

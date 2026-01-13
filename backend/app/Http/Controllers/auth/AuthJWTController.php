@@ -5,6 +5,7 @@ namespace App\Http\Controllers\auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\updateUserRequest;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,22 @@ class AuthJWTController extends Controller
     public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
+    }
+    public function index(Request $request)
+    {
+        $perPage = $request->query('per_page', 10);
+        $users = $this->authService->getAllUsers($perPage);
+        return response()->json($users);
+    }
+    public function show($id)
+    {
+        $user = $this->authService->getById($id);
+
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
     }
 
     public function register(RegisterRequest $request)
@@ -84,5 +101,40 @@ class AuthJWTController extends Controller
             'token_type' => 'Bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 60
         ]);
+    }
+
+    public function destroy($id)
+    {
+        $user = $this->authService->delete($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        return response()->json(['success' => true, 'message' => 'User deleted successfully']);
+    }
+
+    public function update(updateUserRequest $request, $id)
+    {
+
+        try {
+            $user = $this->authService->update($id, $request->validated());
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'user not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'user update successfully',
+                'data' => $user
+            ]);
+        } catch (\Exception $err) {
+            return response()->json([
+                'success' => false,
+                'message' => $err->getMessage()
+            ], 400);
+        }
     }
 }

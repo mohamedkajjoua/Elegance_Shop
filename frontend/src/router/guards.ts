@@ -40,8 +40,13 @@ export function setupRouterGuards(router: Router) {
       return next({ name: "forbidden" });
     }
 
-    if (requiredRole && !authStore.hasRole(requiredRole as any)) {
-      return next({ name: "forbidden" });
+    if (requiredRole) {
+      const allowedRoles = requiredRole.split(",").map((role) => role.trim());
+      const currentUserRole = authStore.user?.role || "";
+
+      if (!allowedRoles.includes(currentUserRole)) {
+        return next({ name: "forbidden" });
+      }
     }
 
     next();
