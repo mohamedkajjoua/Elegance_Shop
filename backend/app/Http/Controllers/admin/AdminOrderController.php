@@ -26,13 +26,20 @@ class AdminOrderController extends Controller
         );
     }
 
-    //  Order details
-    public function show($id)
-    {
-        return response()->json(
-            $this->orderService->getOrderDetails($id)
-        );
-    }
+    // //  Order details
+    // public function show($orderId)
+    // {
+    //     return response()->json(
+    //         $this->orderService->getOrderDetails($orderId)
+    //     );
+    // }
+
+    public function show($orderId)
+{
+    $order = $this->orderService->getOrderDetails((int) $orderId);
+    return response()->json($order);
+}
+
 
     //  Update order status
     public function updateStatus(Request $request, $id)
@@ -127,6 +134,13 @@ class AdminOrderController extends Controller
         };
 
         return new StreamedResponse($callback, 200, $headers);
+    }
+
+        // Get order statistics
+    public function stats()
+    {
+        $stats = $this->orderService->getOrderStats();
+        return response()->json($stats);
     }
 }
 
