@@ -3,6 +3,7 @@
 namespace App\Http\Requests\admin\product;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
 {
@@ -24,7 +25,16 @@ class UpdateProductRequest extends FormRequest
         $productId = $this->route('id');
 
         return [
-            'name' => "sometimes|string|min:3|max:255|unique:products,name,{$productId}",
+            'name' => [
+                'sometimes',
+                'string',
+                'min:3',
+                'max:255',
+
+                Rule::unique('products')->ignore($productId)->where(function ($query) {
+                    return $query->whereNull('deleted_at');
+                }),
+            ],
             'description' => 'sometimes|string|min:10',
             'short_description' => 'sometimes|string|min:5|max:255',
             'price' => 'sometimes|numeric|min:0',

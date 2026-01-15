@@ -1,82 +1,158 @@
 <script setup>
-import { useWishlistStore } from '@/stores/wishlist'
-import { useCartStore } from '@/stores/cart'
-import Breadcrumb from '@/components/layout/Breadcrumb.vue'
+import { onMounted, computed } from "vue";
+import { useWishlistStore } from "@/stores/user/WishlistStore";
+import { useCartStore } from "@/stores/cart";
+import Breadcrumb from "@/components/layout/Breadcrumb.vue";
 
-const wishlistStore = useWishlistStore()
-const cartStore = useCartStore()
+const wishlistStore = useWishlistStore();
+const cartStore = useCartStore();
+const BASE_URL = "http://127.0.0.1:8000";
 
-const breadcrumbItems = [{ label: 'Wishlist' }]
+const breadcrumbItems = [{ label: "Wishlist", to: "/wishlist" }];
 
-function addToCart(product) {
-  cartStore.addToCart({
-    ...product,
-    size: 'M',
-    color: 'Default',
-    quantity: 1
-  })
-  alert('Added to cart!')
-}
+onMounted(() => {
+  wishlistStore.fetchWishlist();
+});
 
-function removeFromWishlist(productId) {
-  wishlistStore.removeFromWishlist(productId)
+const getImageUrl = (item) => {
+  const product = item.product || item;
+  if (!product) return "/images/placeholder.jpg";
+
+  let path = product.image || product.images?.[0]?.image_url || product.image_url;
+
+  if (!path) return "/images/placeholder.jpg";
+  if (path.startsWith("http")) return path;
+
+  const cleanPath = path.replace(/^\//, "");
+  return cleanPath.startsWith("storage/")
+    ? `${BASE_URL}/${cleanPath}`
+    : `${BASE_URL}/storage/${cleanPath}`;
+};
+
+function addToCart(e, item) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const product = item.product || item;
+
+  if (!product.variants || product.variants.length === 0) {
+    console.error("Produit sans variants", product);
+    alert("Ce produit n’est pas disponible");
+    return;
+  }
+
+  const variantId = product.variants[0].id;
+  cartStore.addToCart(variantId, 1);
+
+  const btn = e.currentTarget;
+  const oldHtml = btn.innerHTML;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+
+  btn.classList.remove("bg-[#F0EBFF]", "text-primary");
+  btn.classList.add("bg-green-500", "text-white");
+
+  setTimeout(() => {
+    btn.innerHTML = oldHtml;
+    btn.disabled = false;
+    btn.classList.remove("bg-green-500", "text-white");
+    btn.classList.add("bg-[#F0EBFF]", "text-primary");
+  }, 1000);
 }
 </script>
 
 <template>
   <div class="pb-12">
     <Breadcrumb :items="breadcrumbItems" />
-    
-    <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 md:mb-8">
+
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 min-h-[400px]">
+      <div class="flex justify-between items-center mb-8">
         <h2 class="text-xl md:text-2xl font-bold">My Wishlist</h2>
-        <span class="text-sm md:text-base text-text-light">{{ wishlistStore.totalItems }} items</span>
+        <span class="text-sm text-gray-500">{{ wishlistStore.count }} items</span>
       </div>
 
-      <div v-if="wishlistStore.items.length > 0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        <div 
-          v-for="product in wishlistStore.items"
-          :key="product.id"
-          class="bg-background rounded-xl md:rounded-2xl p-3 md:p-4 group"
+      <div
+        v-if="wishlistStore.loading"
+        class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+      >
+        <div v-for="i in 4" :key="i" class="animate-pulse bg-gray-50 rounded-[20px] p-3 h-80"></div>
+      </div>
+
+      <div
+        v-else-if="wishlistStore.items.length > 0"
+        class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+      >
+        <div
+          v-for="item in wishlistStore.items"
+          :key="item.id"
+          class="product-card bg-white rounded-[20px] p-3 border border-transparent hover:-translate-y-1 hover:shadow-lg hover:border-[#F0EBFF] transition-all duration-300 group"
         >
-          <div class="relative aspect-square overflow-hidden rounded-xl mb-4">
-            <router-link :to="`/product/${product.id}`">
-              <img 
-                :src="product.image" 
-                :alt="product.title"
-                class="w-full h-full object-cover transition-transform group-hover:scale-105"
-              >
-            </router-link>
-            <button 
-              class="absolute top-2 right-2 md:top-3 md:right-3 w-7 h-7 md:w-9 md:h-9 bg-white rounded-full flex items-center justify-center text-danger hover:bg-danger hover:text-white transition-colors text-sm md:text-base"
-              @click="removeFromWishlist(product.id)"
+          <router-link
+            :to="`/product/${item.product_id || item.id}`"
+            class="product-image block relative aspect-square overflow-hidden bg-[#f5f5f5] rounded-2xl"
+          >
+            <img
+              :src="getImageUrl(item)"
+              :alt="item.product?.name || item.name"
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+
+            <span
+              v-if="item.product?.discount > 0"
+              class="absolute top-3 left-3 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-red-500 text-white"
+            >
+              -{{ item.product.discount }}%
+            </span>
+
+            <button
+              class="wishlist-btn absolute top-3 right-3 w-9 h-9 bg-white/90 border-none rounded-full flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100 hover:bg-white hover:scale-110 shadow-sm text-red-500"
+              @click.stop.prevent="wishlistStore.toggleProduct(item.product || item)"
             >
               <i class="fa-solid fa-heart"></i>
             </button>
-          </div>
-          
-          <h3 class="font-semibold text-xs sm:text-sm mb-2 truncate">{{ product.title }}</h3>
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-sm md:text-lg">${{ product.price }}</span>
-            <button 
-              class="w-7 h-7 md:w-9 md:h-9 bg-primary text-white rounded-lg flex items-center justify-center hover:bg-primary-dark transition-colors"
-              @click="addToCart(product)"
+          </router-link>
+
+          <div class="product-info pt-4 px-1 pb-1">
+            <h3
+              class="product-title text-[15px] font-semibold text-gray-800 mb-3 whitespace-nowrap overflow-hidden text-ellipsis"
             >
-              <i class="fa-solid fa-cart-shopping text-xs md:text-sm"></i>
-            </button>
+              {{ item.product?.name || item.name }}
+            </h3>
+
+            <div class="product-footer flex justify-between items-end">
+              <div class="product-price flex flex-col gap-1">
+                <span class="price-label text-[11px] text-gray-400 uppercase"> Price </span>
+                <div class="price-row flex items-center gap-2">
+                  <span class="current-price text-lg font-bold text-gray-900">
+                    ${{ item.product?.final_price || item.final_price }}
+                  </span>
+                  <span
+                    v-if="(item.product?.discount || item.discount) > 0"
+                    class="original-price text-[13px] text-gray-400 line-through"
+                  >
+                    ${{ item.product?.price || item.price }}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                class="add-cart-btn w-9 h-9 flex items-center justify-center bg-[#F0EBFF] text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
+                @click="addToCart($event, item)"
+              >
+                <i class="fa-solid fa-cart-shopping"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-else class="text-center py-10 md:py-16 text-text-light">
-        <i class="fa-regular fa-heart text-4xl md:text-6xl mb-4 opacity-30"></i>
-        <p class="text-base md:text-lg mb-4">Your wishlist is empty</p>
-        <router-link 
-          to="/"
-          class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors"
+      <div v-else class="text-center py-20">
+        <i class="fa-regular fa-heart text-6xl text-gray-200 mb-4"></i>
+        <h3 class="text-xl font-bold text-gray-800">Your wishlist is empty</h3>
+        <router-link to="/shop" class="mt-4 inline-block text-primary font-semibold"
+          >Go to Shop</router-link
         >
-          <i class="fa-solid fa-arrow-left"></i> Browse Products
-        </router-link>
       </div>
     </div>
   </div>

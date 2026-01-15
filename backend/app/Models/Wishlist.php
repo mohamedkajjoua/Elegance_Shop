@@ -7,9 +7,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Wishlist extends Model
 {
-     use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'user_id',
+        'product_id',
+    ];
 
     public function user(): BelongsTo
     {
