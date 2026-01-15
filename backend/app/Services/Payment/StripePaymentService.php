@@ -66,7 +66,8 @@ class StripePaymentService
             return;
         }
 
-        $order = Order::find($orderId);
+
+        $order = Order::with('orderItems.product')->find($orderId);
 
         if (!$order) {
             Log::error("Stripe Webhook: Order #{$orderId} not found in database.");
@@ -80,10 +81,23 @@ class StripePaymentService
 
         try {
             DB::transaction(function () use ($order, $paymentIntent) {
-
                 $orderService = app(\App\Services\OrderService\OrderService::class);
                 $orderService->completeOrder($order);
 
+
+                Log::info("Processing sales count for order #{$order->id}");
+
+                if ($order->orderItems) {
+                    foreach ($order->orderItems as $item) {
+
+                        if ($item->product) {
+                            $item->product->increment('sales_count', (int)$item->quantity);
+                            Log::info("Success: Incremented product #{$item->product_id}");
+                        } else {
+                            Log::warning("Warning: Product relation is null for OrderItem #{$item->id}");
+                        }
+                    }
+                }
 
                 PaymentTransaction::create([
                     'order_id'         => $order->id,
@@ -93,12 +107,16 @@ class StripePaymentService
                     'status'           => 'success',
                     'gateway_response' => json_encode($paymentIntent),
                 ]);
-
-                Log::info("Stripe Webhook: Successfully processed payment for Order #{$order->id}");
             });
         } catch (\Exception $e) {
-            Log::error("Stripe Webhook Transaction Error for Order #{$orderId}: " . $e->getMessage());
-            throw $e;
+
+            Log::error("STRIPE WEBHOOK FATAL ERROR: " . $e->getMessage(), [
+                'order_id' => $orderId,
+                'trace'    => $e->getTraceAsString()
+            ]);
+
+
+            return response()->json(['error' => $e->getMessage()], 400);
         }
     }
 }

@@ -13,10 +13,10 @@ use App\Models\Product;
 
 class OrderItem extends Model
 {
-      use HasFactory;
-      use SoftDeletes;
-      
-       protected $fillable = [
+    use HasFactory;
+    use SoftDeletes;
+
+    protected $fillable = [
         'order_id',
         'product_id',
         'product_variant_id',
@@ -24,17 +24,17 @@ class OrderItem extends Model
         'price',
         'subtotal'
     ];
-        public function order():BelongsTo
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function productVariant():BelongsTo
+    public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class,'product_variant_id');
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
-      public function product():BelongsTo
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
