@@ -3,6 +3,7 @@
 namespace App\Http\Requests\admin\product;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreProductRequest extends FormRequest
 {
@@ -22,7 +23,16 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|min:3|max:255|unique:products,name',
+            'name' => [
+                'required',
+                'string',
+                'min:3',
+                'max:255',
+                // ✅ التعديل هنا: التحقق من الفرادة مع تجاهل المحذوفين ناعماً
+                Rule::unique('products')->where(function ($query) {
+                    return $query->whereNull('deleted_at');
+                })
+            ],
             'description' => 'required|string|min:10',
             'short_description' => 'required|string|min:5|max:255',
             'price' => 'required|numeric|min:0',
@@ -39,7 +49,6 @@ class StoreProductRequest extends FormRequest
             'variants.*.stock' => 'required|integer|min:0',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-
         ];
     }
 }

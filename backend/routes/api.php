@@ -17,7 +17,6 @@ use App\Http\Controllers\user\WishlistController;
 
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Payment\StripePaymentController;
-use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\admin\AdminOrderController;
 
 /*
@@ -150,7 +149,7 @@ Route::middleware(['auth:api', 'role:admin,editor'])
         Route::post('/orders/{id}/cancel', [AdminOrderController::class, 'cancel']);
         Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
         Route::get('/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
-        });
+    });
 
 
 /*|--------------------------------------------------------------------------

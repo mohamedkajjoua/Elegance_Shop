@@ -186,12 +186,12 @@ const filteredOrders = (status) => {
                 <i class="fa-regular fa-credit-card"></i> Pay Now
               </button>
 
-              <button
+              <!--  <button
                 v-if="order.status === 'delivered'"
                 class="w-full sm:w-auto px-4 py-2 bg-black text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-gray-800 transition-colors"
               >
                 Buy Again
-              </button>
+              </button> -->
             </div>
           </div>
         </div>
