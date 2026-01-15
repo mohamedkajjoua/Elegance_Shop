@@ -111,7 +111,7 @@ const toggleDarkMode = () => {
             to="/"
             class="block px-4 py-2 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-500 transition-colors"
           >
-            <i class="fa-solid fa-right-from-bracket mr-2"></i> Switch to Admin
+            <i class="fa-solid fa-right-from-bracket mr-2"></i> Switch to User
           </router-link>
         </div>
       </div>

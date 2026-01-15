@@ -3,7 +3,6 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 export const useAdminBrandStore = defineStore("adminBrand", () => {
-  // ✅ تغيير القيمة الابتدائية إلى مصفوفة فارغة لتجنب أخطاء undefined في v-for
   const brands = ref([]);
   const isLoading = ref(false);
   const error = ref(null);
@@ -14,7 +13,7 @@ export const useAdminBrandStore = defineStore("adminBrand", () => {
 
     try {
       const res = await AdminBrandService.getAll();
-      // دعم للهيكليات المختلفة للـ API (Res.data أو Res.data.data)
+
       brands.value = res.data.data || res.data;
     } catch (err: any) {
       console.error("error to fetch brand");
@@ -29,7 +28,6 @@ export const useAdminBrandStore = defineStore("adminBrand", () => {
     error.value = null;
     try {
       await AdminBrandService.update(data, id);
-
       await fetchBrand();
     } catch (err: any) {
       console.error("failed to update brand");
@@ -45,7 +43,6 @@ export const useAdminBrandStore = defineStore("adminBrand", () => {
     error.value = null;
     try {
       await AdminBrandService.create(data);
-
       await fetchBrand();
     } catch (err: any) {
       console.error("failed to create brand");

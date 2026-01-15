@@ -236,7 +236,7 @@ watch(searchQuery, (newVal) => {
               to="/admin"
               class="profile-dropdown-item flex items-center gap-3 p-2.5 rounded-lg text-sm text-text hover:bg-background"
             >
-              <i class="fa-solid fa-right-from-bracket mr-2"></i> Switch to User
+              <i class="fa-solid fa-right-from-bracket mr-2"></i> Switch to Admin
             </router-link>
 
             <hr class="my-1.5 border-t border-border" />
