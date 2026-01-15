@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { watch } from 'vue'
 import AdminHeader from '@/components/admin/AdminHeader.vue'
 import AdminNav from '@/components/admin/AdminNav.vue'
 import api from '@/services/api'
@@ -9,21 +10,28 @@ const orders = ref([])
 const pagination = ref({})
 const loading = ref(true)
 const currentPage = ref(1)
+const selectedPeriod = ref('this_month')
 
 // Fetch orders from backend
 const fetchOrders = async (page = 1) => {
   try {
     loading.value = true
-    const res = await api.get(`/admin/orders?page=${page}`)
+
+    const res = await api.get('/admin/orders', {
+      params: {
+        page,
+        period: selectedPeriod.value,
+      },
+    })
+
     orders.value = res.data.data
-    console.log(orders.value)
     pagination.value = {
       current_page: res.data.current_page,
       last_page: res.data.last_page,
       total: res.data.total,
-      per_page: res.data.per_page
-
+      per_page: res.data.per_page,
     }
+
     currentPage.value = page
   } catch (error) {
     console.error('Error fetching orders:', error)
@@ -31,6 +39,9 @@ const fetchOrders = async (page = 1) => {
     loading.value = false
   }
 }
+watch(selectedPeriod, () => {
+  fetchOrders(1)
+})
 
 // Fetch order stats (you need to create this endpoint)
 const stats = ref({
@@ -54,26 +65,6 @@ const fetchStats = async () => {
   }
 }
 
-// Update order status
-const updateOrderStatus = async (orderId, status) => {
-  try {
-    await api.put(`/admin/orders/${orderId}/status`, { status })
-    await fetchOrders(currentPage.value)
-  } catch (error) {
-    console.error('Error updating status:', error)
-  }
-}
-
-// Cancel order
-const cancelOrder = async (orderId) => {
-    if (!confirm('Are you sure you want to cancel this order?'))return
-  try {
-    await api.post(`/admin/orders/${orderId}/cancel`)
-    await fetchOrders(currentPage.value)
-  } catch (error) {
-    console.error('Error cancelling order:', error)
-  }
-}
 
 // Refund order
 const refundOrder = async (orderId) => {
@@ -126,6 +117,24 @@ onMounted(() => {
   fetchOrders()
   fetchStats()
 })
+//print order
+
+const exportCsv = async () => {
+  const response = await api.get('/admin/orders/export/csv', {
+    responseType: 'blob',
+    params: {
+      period: selectedPeriod.value,
+    },
+  })
+
+  const blob = new Blob([response.data], { type: 'text/csv' })
+  const link = document.createElement('a')
+
+  link.href = window.URL.createObjectURL(blob)
+  link.download = `orders_${selectedPeriod.value}.csv`
+  link.click()
+}
+
 </script>
 <template>
   <div class="min-h-screen bg-gray-100 flex">
@@ -260,15 +269,31 @@ onMounted(() => {
         <!-- Orders Content -->
         <div v-else>
           <!-- Header -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 class="text-lg md:text-xl font-semibold text-slate-800">
-              All Order List ({{ pagination.total }} orders)
-            </h2>
-            <select class="px-3 md:px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm">
-              <option>This Month</option>
-              <option>Last Month</option>
-            </select>
-          </div>
+         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+
+
+  <h2 class="text-lg md:text-xl font-semibold text-slate-800">
+    All Order List ({{ pagination.total }} orders)
+  </h2>
+
+
+  <div class="flex items-center gap-3">
+    <select class="px-3 md:px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm" v-model="selectedPeriod">
+      <option value="this_month">This Month</option>
+      <option value="last_month">Last Month</option>
+    </select>
+
+    <button
+      class="px-4 py-2 border border-gray-200 rounded-lg font-medium text-slate-600 hover:bg-gray-50 flex items-center gap-2"
+      @click="exportCsv"
+    >
+      <i class="fa-solid fa-print text-sm"></i>
+      <span>Print</span>
+    </button>
+  </div>
+
+</div>
+
 
           <!-- Mobile Orders Cards -->
           <div class="md:hidden space-y-3">
@@ -380,10 +405,6 @@ onMounted(() => {
                         class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-slate-500 hover:bg-gray-100">
                         <i class="fa-solid fa-eye text-sm"></i>
                       </router-link>
-                      <button @click="cancelOrder(order.id)"
-                        class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-red-500 hover:bg-red-50">
-                        <i class="fa-solid fa-xmark text-sm"></i>
-                      </button>
                       <button @click="refundOrder(order.id)"
                         class="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-orange-500 hover:bg-orange-50">
                         <i class="fa-solid fa-dollar-sign text-sm"></i>

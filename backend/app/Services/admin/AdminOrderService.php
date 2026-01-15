@@ -6,13 +6,25 @@ use App\Models\Order;
 
 class AdminOrderService
 {
-    //  List all orders
-    public function listOrders()
-    {
-        return Order::with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+
+public function listOrders(string $period = 'this_month')
+{
+    $query = Order::with('user')
+        ->orderBy('created_at', 'desc');
+
+    if ($period === 'this_month') {
+        $query->whereMonth('created_at', now()->month)
+              ->whereYear('created_at', now()->year);
     }
+
+    if ($period === 'last_month') {
+        $query->whereMonth('created_at', now()->subMonth()->month)
+              ->whereYear('created_at', now()->subMonth()->year);
+    }
+
+    return $query->paginate(10);
+}
+
 
     // Order details
     public function getOrderDetails(int $orderId)
@@ -75,10 +87,23 @@ public function cancelOrder(Order $order): Order
     }
 // get Orders For Export
 
-     public function getOrdersForExport()
-    {
-        return Order::with('user')->orderBy('created_at', 'desc')->get();
+public function getOrdersForExport(string $period = 'this_month')
+{
+    $query = Order::with('user')->orderBy('created_at', 'desc');
+
+    if ($period === 'this_month') {
+        $query->whereMonth('created_at', now()->month)
+              ->whereYear('created_at', now()->year);
     }
+
+    if ($period === 'last_month') {
+        $query->whereMonth('created_at', now()->subMonth()->month)
+              ->whereYear('created_at', now()->subMonth()->year);
+    }
+
+    return $query->get();
+}
+
 
      // Get order statistics
     public function getOrderStats()

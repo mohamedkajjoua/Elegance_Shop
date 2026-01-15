@@ -19,22 +19,18 @@ class AdminOrderController extends Controller
     }
 
     //  List orders
-    public function index()
-    {
-        return response()->json(
-            $this->orderService->listOrders()
-        );
-    }
+ public function index(Request $request)
+{
+    $period = $request->query('period', 'this_month');
+
+    return response()->json(
+        $this->orderService->listOrders($period)
+    );
+}
+
 
     // //  Order details
-    // public function show($orderId)
-    // {
-    //     return response()->json(
-    //         $this->orderService->getOrderDetails($orderId)
-    //     );
-    // }
-
-    public function show($orderId)
+ public function show($orderId)
 {
     $order = $this->orderService->getOrderDetails((int) $orderId);
     return response()->json($order);
@@ -95,9 +91,11 @@ class AdminOrderController extends Controller
     }
 
 
-    public function exportCsv()
+    public function exportCsv(Request $request)
     {
-        $orders = $this->orderService->getOrdersForExport();
+          $period = $request->query('period', 'this_month');
+
+         $orders = $this->orderService->getOrdersForExport($period);
 
         $headers = [
             "Content-Type" => "text/csv",

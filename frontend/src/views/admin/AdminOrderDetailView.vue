@@ -29,7 +29,7 @@ const fetchOrderDetails = async () => {
 // Calculate totals
 const itemsTotal = computed(() => {
   if (!order.value?.order_items) return 0
-  return order.value.order_items.reduce((sum, item) => 
+  return order.value.order_items.reduce((sum, item) =>
     sum + (parseFloat(item.price) * item.quantity), 0
   )
 })
@@ -68,23 +68,11 @@ const formatCurrency = (amount) => {
   return parseFloat(amount).toFixed(2)
 }
 
-// Cancel order
-const cancelOrder = async () => {
-  if (!confirm('Are you sure you want to cancel this order?')) return
-  
-  try {
-    await api.post(`/admin/orders/${order.value.id}/cancel`)
-    await fetchOrderDetails() // Refresh order data
-  } catch (error) {
-    console.error('Error cancelling order:', error)
-    alert(error.response?.data?.message || 'Failed to cancel order')
-  }
-}
 
 // Refund order
 const refundOrder = async () => {
   if (!confirm('Are you sure you want to refund this order?')) return
-  
+
   try {
     await api.post(`/admin/orders/${order.value.id}/refund`)
     await fetchOrderDetails() // Refresh order data
@@ -97,7 +85,7 @@ const refundOrder = async () => {
 // Update order status
 const updateOrderStatus = async (status) => {
   if (!confirm(`Change order status to ${status}?`)) return
-  
+
   try {
     await api.patch(`/admin/orders/${order.value.id}/status`, { status })
     await fetchOrderDetails() // Refresh order data
@@ -107,10 +95,35 @@ const updateOrderStatus = async (status) => {
   }
 }
 
+
 // Initialize
 onMounted(() => {
   fetchOrderDetails()
 })
+
+// calcule shipping
+const calculateShipping = () => {
+  if (!order.value?.order_items) return 0
+
+  let totalShipping = 0
+  order.value.order_items.forEach(item => {
+    if (item.product_variant?.product?.shipping) {
+
+      totalShipping += parseFloat(item.product_variant.product.shipping) * item.quantity
+    }
+  })
+  return totalShipping
+}
+
+const totalAmount = computed(() => {
+  const subtotal = parseFloat(order.value?.subtotal || 0)
+  const shipping = calculateShipping()
+
+  return subtotal + shipping
+})
+
+
+
 </script>
 
 <template>
@@ -176,25 +189,17 @@ onMounted(() => {
                   <button @click="updateOrderStatus('delivered')" class="block w-full text-left px-4 py-2 hover:bg-gray-50 text-sm">Delivered</button>
                 </div>
               </div>
-              
-              <button v-if="order.status !== 'cancelled' && order.status !== 'delivered'" 
-                @click="cancelOrder"
-                class="px-4 py-2 border border-red-200 bg-red-50 rounded-lg font-medium text-red-500 hover:bg-red-100 flex items-center gap-2">
-                <i class="fa-solid fa-xmark text-sm"></i>
-                <span>Cancel</span>
-              </button>
-              
-              <button v-if="order.status === 'cancelled' && order.payment_status === 'paid'" 
+
+
+
+              <button v-if="order.status === 'cancelled' && order.payment_status === 'paid'"
                 @click="refundOrder"
                 class="px-4 py-2 border border-orange-200 bg-orange-50 rounded-lg font-medium text-orange-500 hover:bg-orange-100 flex items-center gap-2">
                 <i class="fa-solid fa-dollar-sign text-sm"></i>
                 <span>Refund</span>
               </button>
-              
-              <button class="px-4 py-2 border border-gray-200 rounded-lg font-medium text-slate-600 hover:bg-gray-50 flex items-center gap-2">
-                <i class="fa-solid fa-print text-sm"></i>
-                <span>Print</span>
-              </button>
+
+
             </div>
           </div>
 
@@ -237,7 +242,7 @@ onMounted(() => {
                 <div class="p-4 md:p-6 border-b border-gray-100">
                   <h3 class="text-lg font-semibold text-slate-800">Order Items ({{ order.order_items?.length || 0 }})</h3>
                 </div>
-                
+
                 <div v-if="order.order_items && order.order_items.length > 0" class="divide-y divide-gray-100">
                   <div v-for="item in order.order_items" :key="item.id" class="p-4 md:p-6 flex gap-4">
                     <div class="w-16 h-16 md:w-20 md:h-20 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -269,19 +274,15 @@ onMounted(() => {
                 <div class="space-y-3">
                   <div class="flex justify-between">
                     <span class="text-slate-600">Subtotal</span>
-                    <span class="text-slate-800 font-medium">${{ formatCurrency(order.subtotal) }}</span>
+                    <span class="text-slate-800 font-medium">{{ formatCurrency(order.subtotal) }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-slate-600">Shipping</span>
-                    <span class="text-slate-800 font-medium">{{order.shipping}}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-600">Tax</span>
-                    <span class="text-slate-800 font-medium">$0.00</span>
+                    <span class="text-slate-800 font-medium"> {{ formatCurrency(calculateShipping()) }}</span>
                   </div>
                   <div class="flex justify-between pt-3 border-t border-gray-200 text-lg font-semibold">
                     <span class="text-slate-800">Total</span>
-                    <span class="text-orange-500">${{ formatCurrency(order.total_price) }}</span>
+                    <span class="text-orange-500">  ${{ formatCurrency(totalAmount) }}</span>
                   </div>
                 </div>
               </div>
