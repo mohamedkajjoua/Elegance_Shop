@@ -80,4 +80,20 @@ public function cancelOrder(Order $order): Order
         return Order::with('user')->orderBy('created_at', 'desc')->get();
     }
 
+     // Get order statistics
+    public function getOrderStats()
+    {
+        return [
+            'total' => Order::count(),
+            'refunded' => Order::where('payment_status', 'refunded')->count(),
+            'cancelled' => Order::where('status', 'cancelled')->count(),
+            'shipped' => Order::where('status', 'shipped')->count(),
+            'delivered' => Order::where('status', 'delivered')->count(),
+            'delivering' => Order::where('status', 'delivering')->count(),
+            'pending' => Order::where('status', 'pending')->count(),
+            'paid' => Order::where('payment_status', 'paid')->count(),
+            'processing' => Order::where('status', 'processing')->count(),
+        ];
+    }
+
 }
