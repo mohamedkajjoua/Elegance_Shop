@@ -17,6 +17,8 @@ use App\Http\Controllers\user\WishlistController;
 
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Payment\StripePaymentController;
+use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\admin\AdminOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +129,30 @@ Route::prefix('brands')->group(function () {
         Route::delete('/{id}', [BrandController::class, 'destroy']);
     });
 });
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin Order Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'role:admin,editor'])
+    ->prefix('admin')
+    ->group(function () {
+
+        Route::get('/orders', [AdminOrderController::class, 'index']);
+        Route::get('/stats', [AdminOrderController::class, 'stats']);
+        Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
+        Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+
+        Route::post('/orders/{id}/cancel', [AdminOrderController::class, 'cancel']);
+        Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
+        Route::get('/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
+        });
+
+
 /*|--------------------------------------------------------------------------
 | Settings Routes
 |--------------------------------------------------------------------------*/
