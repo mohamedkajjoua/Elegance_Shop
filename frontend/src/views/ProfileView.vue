@@ -1,26 +1,22 @@
 <script setup>
 import { ref, onMounted } from "vue";
-// 1. قمنا بإلغاء استدعاء userStore واستدعينا authStore فقط
+
 import { useAuthStore } from "@/stores/auth/auth";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
+import { useAddressStore } from "@/stores/user/AddressStore"; // تأكد من المسار الصحيح
 
-// 2. قمنا بتعيين المتغير userStore ليحمل قيمة useAuthStore
-// هذا يضمن أن باقي الكود والـ Template يعملون بدون تغييرات كثيرة
 const userStore = useAuthStore();
+const addressStore = useAddressStore(); // استخدام ستور العناوين
 
 const breadcrumbItems = [{ label: "My Profile" }];
 
 const isEditing = ref(false);
 const photoInput = ref(null);
-
-// متغير لعرض الصورة (المعاينة)
 const avatarPreview = ref("");
 
-// دالة تهيئة النموذج
 const initForm = () => {
-  const user = userStore.user || {}; // تجنب الخطأ إذا لم تكن البيانات قد وصلت
+  const user = userStore.user || {};
 
-  // إعداد رابط المعاينة (Preview)
   if (user.avatar) {
     avatarPreview.value = user.avatar.startsWith("http")
       ? user.avatar
@@ -34,32 +30,28 @@ const initForm = () => {
     last_name: user.last_name || "",
     email: user.email || "",
     phone: user.phone || "",
-    // 3. هنا طلبك: وضع الصورة الحالية في النموذج مبدئياً
-    // ملاحظة: عند التعديل سيتم استبدال هذه القيمة بملف (File)
     avatar: user.avatar,
   };
 };
 
 const editForm = ref({});
-
-// عند التحميل، املأ النموذج
-onMounted(() => {
+onMounted(async () => {
   if (userStore.user) {
     editForm.value = initForm();
   }
+
+  await addressStore.fetchAddresses();
 });
 
-// دالة الحفظ الموحدة (بيانات + صورة)
 async function toggleEdit() {
   if (isEditing.value) {
     try {
-      // إرسال البيانات (بما فيها الصورة إذا تغيرت) إلى دالة التحديث في AuthStore
       const res = await userStore.updateUser(userStore.user.id, editForm.value);
 
       if (res && res.success) {
         alert("Profile saved successfully!");
         isEditing.value = false;
-        // تحديث البيانات في الواجهة
+
         editForm.value = initForm();
       } else {
         alert(res?.message || "Failed to update profile");
@@ -69,24 +61,20 @@ async function toggleEdit() {
       alert("Error saving profile");
     }
   } else {
-    // تفعيل وضع التعديل
     editForm.value = initForm();
     isEditing.value = true;
   }
 }
 
 function cancelEdit() {
-  editForm.value = initForm(); // التراجع عن التغييرات
+  editForm.value = initForm();
   isEditing.value = false;
 }
 
-// التعامل مع اختيار ملف الصورة
 function triggerPhotoUpload() {
-  // إذا لم يكن في وضع التعديل، قم بتفعيله أولاً ليتمكن من الحفظ
   if (!isEditing.value) {
     toggleEdit();
   }
-  // فتح نافذة اختيار الملفات
   setTimeout(() => photoInput.value?.click(), 0);
 }
 
@@ -94,39 +82,28 @@ function handlePhotoChange(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  // التحقق من الملف
   if (!file.type.startsWith("image/")) {
     alert("Please select an image file");
     return;
   }
   if (file.size > 5 * 1024 * 1024) {
-    // 5MB limit
     alert("Image size should be less than 5MB");
     return;
   }
 
-  // 4. وضع الملف الجديد داخل النموذج بدلاً من الرابط النصي القديم
   editForm.value.avatar = file;
-
-  // تحديث المعاينة فوراً ليراها المستخدم
   avatarPreview.value = URL.createObjectURL(file);
 }
-
-// --- قسم العناوين (Addresses) ---
-// ملاحظة: بما أننا نستخدم useAuthStore الآن
-// يجب التأكد أن الدوال (addAddress, updateAddress, removeAddress) موجودة في ملف auth.ts
-// أو يمكنك نقل منطق العناوين هنا مباشرة باستخدام axios إذا لم تكن موجودة في الستور.
 
 const showAddressForm = ref(false);
 const editingAddressId = ref(null);
 const addressForm = ref({
   label: "",
-  recipient: "",
   phone: "",
   street: "",
   city: "",
   state: "",
-  zipCode: "",
+  post_code: "",
   country: "",
 });
 
@@ -139,12 +116,11 @@ function resetAddressForm() {
   editingAddressId.value = null;
   addressForm.value = {
     label: "",
-    recipient: "",
     phone: "",
     street: "",
     city: "",
     state: "",
-    zipCode: "",
+    post_code: "",
     country: "",
   };
 }
@@ -156,28 +132,55 @@ function editAddress(address) {
 }
 
 async function saveAddress() {
-  // التحقق من الحقول المطلوبة
-  if (!addressForm.value.label || !addressForm.value.street) {
-    alert("Please fill required fields");
+  // 1. التحقق من الحقول
+  if (!addressForm.value.label || !addressForm.value.street || !addressForm.value.city) {
+    alert("Please fill required fields (Label, Street, and City)");
     return;
   }
 
   const addressData = {
     ...addressForm.value,
-    recipient: addressForm.value.recipient || userStore.user.first_name,
-    phone: addressForm.value.phone || userStore.user.phone,
-    text: `${addressForm.value.street}, ${addressForm.value.city}`,
+    recipient: addressForm.value.recipient || userStore.user?.first_name || "User",
+    phone: addressForm.value.phone || userStore.user?.phone,
   };
 
-  // استدعاء الدوال من AuthStore (تأكد من وجودها هناك)
-  if (editingAddressId.value) {
-    if (userStore.updateAddress) await userStore.updateAddress(editingAddressId.value, addressData);
-  } else {
-    if (userStore.addAddress) await userStore.addAddress(addressData);
+  // 2. نحفظ نوع العملية (هل هي تعديل؟) في متغير منفصل الآن
+  // لأننا سنفقد قيمة editingAddressId بعد قليل عند عمل reset
+  const isUpdating = editingAddressId.value;
+
+  try {
+    if (isUpdating) {
+      await addressStore.updateAddress(editingAddressId.value, addressData);
+    } else {
+      await addressStore.addAddress(addressData);
+    }
+
+    if (!addressStore.error) {
+      // 3. نستخدم المتغير المحفوظ لعرض الرسالة
+      alert(isUpdating ? "Address Updated Successfully!" : "Address Created Successfully!");
+
+      showAddressForm.value = false;
+      resetAddressForm(); // يتم المسح بعد عرض الرسالة
+    } else {
+      alert(addressStore.error);
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Something went wrong");
+  }
+}
+
+async function deleteAddress(id) {
+  if (!confirm("Are you sure you want to delete this address?")) {
+    return;
   }
 
-  showAddressForm.value = false;
-  resetAddressForm();
+  try {
+    await addressStore.deleteAddress(id);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to delete address");
+  }
 }
 </script>
 
@@ -306,7 +309,8 @@ async function saveAddress() {
             </div>
           </div>
         </div>
-        <div class="bg-white rounded-2xl p-6 sm:p-8">
+
+        <div class="bg-white rounded-2xl p-6 sm:p-8 mt-6">
           <div
             class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
           >
@@ -337,15 +341,7 @@ async function saveAddress() {
                   class="w-full px-4 py-3 border border-border rounded-xl focus:border-primary outline-none text-sm"
                 />
               </div>
-              <div>
-                <label class="block text-sm font-medium text-text-light mb-2">Recipient Name</label>
-                <input
-                  v-model="addressForm.recipient"
-                  type="text"
-                  :placeholder="userStore.user?.first_name"
-                  class="w-full px-4 py-3 border border-border rounded-xl focus:border-primary outline-none text-sm"
-                />
-              </div>
+
               <div>
                 <label class="block text-sm font-medium text-text-light mb-2">Phone</label>
                 <input
@@ -384,23 +380,13 @@ async function saveAddress() {
                   class="w-full px-4 py-3 border border-border rounded-xl focus:border-primary outline-none text-sm"
                 />
               </div>
-              <div>
-                <label class="block text-sm font-medium text-text-light mb-2"
-                  >State / Province</label
-                >
-                <input
-                  v-model="addressForm.state"
-                  type="text"
-                  placeholder="e.g., NY"
-                  class="w-full px-4 py-3 border border-border rounded-xl focus:border-primary outline-none text-sm"
-                />
-              </div>
+
               <div>
                 <label class="block text-sm font-medium text-text-light mb-2"
                   >ZIP / Postal Code</label
                 >
                 <input
-                  v-model="addressForm.zipCode"
+                  v-model="addressForm.post_code"
                   type="text"
                   placeholder="e.g., 10001"
                   class="w-full px-4 py-3 border border-border rounded-xl focus:border-primary outline-none text-sm"
@@ -418,16 +404,55 @@ async function saveAddress() {
                 class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
                 @click="saveAddress"
               >
-                <i class="fa-solid fa-check mr-2"></i
-                >{{ editingAddressId ? "Update Address" : "Save Address" }}
+                <i v-if="addressStore.isLoading" class="fa-solid fa-spinner fa-spin mr-2"></i>
+                <i v-else class="fa-solid fa-check mr-2"></i>
+                {{ editingAddressId ? "Update Address" : "Save Address" }}
               </button>
             </div>
           </div>
 
-          <div v-if="userStore.addresses && userStore.addresses.length > 0">
-            <p class="text-sm text-gray-500">Addresses loaded from store...</p>
+          <div v-if="addressStore.addresses && addressStore.addresses.length > 0" class="space-y-4">
+            <div
+              v-for="address in addressStore.addresses"
+              :key="address.id"
+              class="flex flex-col sm:flex-row items-start gap-4 p-4 border border-border rounded-xl"
+            >
+              <div
+                class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0"
+              >
+                <i class="fa-solid fa-location-dot"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-bold mb-1">{{ address.label }}</h4>
+                <p class="text-sm text-text-light">{{ address.recipient }} - {{ address.phone }}</p>
+                <p class="text-sm text-text-light mt-1 break-words">
+                  {{ address.street }}, {{ address.city }}, {{ address.country }}
+                </p>
+              </div>
+              <div class="flex gap-2 shrink-0">
+                <button
+                  class="w-8 h-8 border border-border rounded-lg flex items-center justify-center text-text-light hover:text-primary hover:border-primary transition-colors"
+                  @click="editAddress(address)"
+                >
+                  <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+                <button
+                  class="w-8 h-8 border border-border rounded-lg flex items-center justify-center text-text-light hover:text-danger hover:border-danger transition-colors"
+                  @click="deleteAddress(address.id)"
+                >
+                  <i class="fa-solid fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
           </div>
-          <div v-else class="text-center py-4 text-gray-400">No addresses saved yet.</div>
+
+          <div v-else-if="!showAddressForm" class="text-center py-8 text-text-light">
+            <i class="fa-solid fa-location-dot text-4xl mb-4 opacity-30"></i>
+            <p>No saved addresses yet</p>
+            <button class="mt-4 text-primary hover:underline" @click="showAddressForm = true">
+              Add your first address
+            </button>
+          </div>
         </div>
       </div>
 

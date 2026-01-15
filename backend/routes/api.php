@@ -4,6 +4,7 @@ use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\CategoryController;
 use App\Http\Controllers\admin\ProductController;
 use App\Http\Controllers\admin\SettingController;
+use App\Http\Controllers\Api\AddressController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
@@ -15,7 +16,7 @@ use App\Http\Controllers\user\ProductSearchController;
 use App\Http\Controllers\user\WishlistController;
 
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Payment\StripePaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -170,7 +171,6 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/wishlist/toggle', [WishlistController::class, 'store']);
     Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
-
 });
 /*
 |--------------------------------------------------------------------------
@@ -182,27 +182,34 @@ Route::middleware('auth:api')->group(function () {
 
 Route::middleware('auth:api')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
-    Route::get('/orders', [OrderController::class, 'index']);      // Order History
-    Route::get('/orders/{id}', [OrderController::class, 'show']);  // Order Details
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
 
-Route::get('/order-pdf/{id}', function($id) {
+Route::get('/order-pdf/{id}', function ($id) {
     $order = App\Models\Order::with('orderItems.productVariant.product', 'user', 'shippingAddress')->findOrFail($id);
     $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('emails.invoice_pdf', compact('order'));
-    return $pdf->stream('order-'.$order->id.'.pdf');
+    return $pdf->stream('order-' . $order->id . '.pdf');
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| adresses Routes
+| addresses Routes
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth:api')->group(function () {
-    Route::get('/addresses', [AddressController::class, 'index']);
-    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::apiResource('addresses', AddressController::class);
 });
 
+/*
+|--------------------------------------------------------------------------
+| payment Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:api')->group(function () {
+    Route::post('/payment/intent', [StripePaymentController::class, 'createPaymentIntent']);
+});
 
-
+Route::post('/webhook', [StripePaymentController::class, 'webhook']);

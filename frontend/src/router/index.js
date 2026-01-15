@@ -92,8 +92,8 @@ const router = createRouter({
       },
     },
     {
-      path: "/order-confirmation",
-      name: "order-confirmation",
+      path: "/success",
+      name: "payment-success",
       component: () => import("@/views/OrderConfirmationView.vue"),
       meta: {
         title: "Order Confirmed - Fashion Store",

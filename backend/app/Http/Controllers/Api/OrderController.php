@@ -20,6 +20,7 @@ class OrderController extends Controller
     //  Create a new order
     public function store(StoreOrderRequest $request): JsonResponse
     {
+
         $order = $this->orderService->createOrder(
             $request->user(),
             $request->addresse_id,

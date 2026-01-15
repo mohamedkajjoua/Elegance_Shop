@@ -16,87 +16,98 @@ class OrderService
      * Create Order + PDF + Email
      */
 
-public function createOrder($user, int $addressId, string $paymentMethod): Order
-{
-    $order = DB::transaction(function () use ($user, $addressId, $paymentMethod) {
+    public function createOrder($user, int $addressId, string $paymentMethod): Order
+    {
+        return DB::transaction(function () use ($user, $addressId, $paymentMethod) {
+            $cart = Cart::with('cartItems.productVariant.product')
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
-        $cart = Cart::with('cartItems.productVariant.product')
-            ->where('user_id', $user->id)
-            ->firstOrFail();
-
-        if ($cart->cartItems->isEmpty()) {
-            throw new \Exception('Cart is empty');
-        }
-
-        $subtotal = 0;
-
-        foreach ($cart->cartItems as $item) {
-            if ($item->quantity > $item->productVariant->stock) {
-                throw new \Exception(
-                    "Le produit {$item->productVariant->product->name} est en rupture de stock"
-                );
+            if ($cart->cartItems->isEmpty()) {
+                throw new \Exception('Cart is empty');
             }
 
-            $subtotal += $item->quantity * $item->productVariant->price;
-        }
+            $subtotal = $cart->cartItems->sum(function ($item) {
+                return $item->quantity * $item->productVariant->price;
+            });
 
-        $order = Order::create([
-            'user_id' => $user->id,
-            'addresse_id' => $addressId,
-            'subtotal' => $subtotal,
-            'total_price' => $subtotal,
-            'status' => 'pending',
-            'payment_method' => $paymentMethod,
-            'payment_status' => $paymentMethod === 'cod' ? 'pending' : 'paid',
-        ]);
 
-        foreach ($cart->cartItems as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item->productVariant->product_id,
-                'product_variant_id' => $item->product_variant_id,
-                'quantity' => $item->quantity,
-                'price' => $item->productVariant->price,
-                'subtotal' => $item->quantity * $item->productVariant->price,
+            $order = Order::create([
+                'user_id' => $user->id,
+                'addresse_id' => $addressId,
+                'subtotal' => $subtotal,
+                'total_price' => $subtotal,
+                'status' => 'pending',
+                'payment_method' => $paymentMethod,
+                'payment_status' => 'pending',
             ]);
 
-            $item->productVariant->decrement('stock', $item->quantity);
+            foreach ($cart->cartItems as $item) {
+
+                if ($item->quantity > $item->productVariant->stock) {
+                    throw new \Exception("Product {$item->productVariant->product->name} en rupture");
+                }
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item->productVariant->product_id,
+                    'product_variant_id' => $item->product_variant_id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->productVariant->price,
+                    'subtotal' => $item->quantity * $item->price,
+                ]);
+
+
+                $item->productVariant->decrement('stock', $item->quantity);
+            }
+
+            return $order;
+        });
+    }
+
+    public function completeOrder(Order $order)
+    {
+        DB::transaction(function () use ($order) {
+
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => 'processing'
+            ]);
+
+
+            Cart::where('user_id', $order->user_id)->first()?->cartItems()->delete();
+
+
+            $this->sendInvoice($order);
+        });
+    }
+
+    protected function sendInvoice(Order $order)
+    {
+
+        try {
+            $order->load(['user', 'shippingAddress', 'orderItems.productVariant.product']);
+
+
+            $pdf = Pdf::loadView('emails.invoice_pdf', compact('order'));
+
+            Mail::to($order->user->email)
+                ->send(new OrderConfirmationMail($order, $pdf));
+        } catch (\Exception $e) {
+
+            \Log::error("Failed to send invoice email for Order #{$order->id}: " . $e->getMessage());
         }
-
-        $cart->cartItems()->delete();
-
-        $order->load([
-            'user',
-            'shippingAddress',
-            'orderItems.productVariant.product',
-        ]);
-
-        return $order;
-    });
-
-
-    $pdf = Pdf::loadView('emails.invoice_pdf', compact('order'));
-
-    Mail::to($user->email)
-        ->send(new OrderConfirmationMail($order, $pdf));
-
-    return $order;
-}
+    }
 
     /**
      * Order History (User)
      */
     public function getUserOrders($user)
     {
-        return Order::where('user_id', $user->id)
+        return Order::with(['orderItems.productVariant.product.images'])
+            ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->get([
-                'id',
-                'total_price',
-                'status',
-                'payment_status',
-                'created_at'
-            ]);
+            ->get();
     }
 
     /**
@@ -105,9 +116,9 @@ public function createOrder($user, int $addressId, string $paymentMethod): Order
     public function getOrderDetails(int $orderId, $user)
     {
         $order = Order::with([
-                'shippingAddress',
-                'orderItems.productVariant.product'
-            ])
+            'shippingAddress',
+            'orderItems.productVariant.product'
+        ])
             ->where('id', $orderId)
             ->where('user_id', $user->id)
             ->first();
