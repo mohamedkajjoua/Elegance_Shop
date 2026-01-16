@@ -18,6 +18,7 @@ use App\Http\Controllers\user\WishlistController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Payment\StripePaymentController;
 use App\Http\Controllers\admin\AdminOrderController;
+use App\Http\Controllers\admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -237,3 +238,14 @@ Route::middleware('auth:api')->group(function () {
 });
 
 Route::post('/webhook', [StripePaymentController::class, 'webhook']);
+
+/*
+|--------------------------------------------------------------------------
+| dashboardStats Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
+
+    Route::get('/admin/dashboardStats', [DashboardController::class, 'index']);
+});

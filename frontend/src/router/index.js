@@ -143,6 +143,7 @@ const router = createRouter({
     },
 
     // Products Management
+
     {
       path: "/admin/products",
       name: "admin-products",
@@ -163,7 +164,6 @@ const router = createRouter({
         role: "admin,editor",
       },
     },
-
     {
       path: "/admin/products/:id",
       name: "admin-product-detail",
@@ -174,9 +174,10 @@ const router = createRouter({
         role: "admin,editor",
       },
     },
+
     {
       path: "/admin/products/edit/:id",
-      name: "admin-product-detail",
+      name: "admin-product-edit",
       component: () => import("@/views/admin/AdminProductEditView.vue"),
       meta: {
         title: "Product Edit - Admin Panel",
@@ -326,8 +327,11 @@ const router = createRouter({
     },
 
     {
+      // Catch-all route for 404
       path: "/:pathMatch(.*)*",
-      redirect: "/forbidden",
+      name: "not-found",
+      component: () => import("@/views/NotFoundView.vue"),
+      meta: { title: "Page Not Found - Elegance Shop" },
     },
   ],
 });
