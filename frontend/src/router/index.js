@@ -92,8 +92,8 @@ const router = createRouter({
       },
     },
     {
-      path: "/order-confirmation",
-      name: "order-confirmation",
+      path: "/success",
+      name: "payment-success",
       component: () => import("@/views/OrderConfirmationView.vue"),
       meta: {
         title: "Order Confirmed - Fashion Store",
@@ -101,7 +101,7 @@ const router = createRouter({
       },
     },
     {
-      path: "/profile",
+      path: "/profile/:id",
       name: "profile",
       component: () => import("@/views/ProfileView.vue"),
       meta: {
@@ -138,11 +138,12 @@ const router = createRouter({
       meta: {
         title: "Dashboard - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
 
     // Products Management
+
     {
       path: "/admin/products",
       name: "admin-products",
@@ -150,7 +151,7 @@ const router = createRouter({
       meta: {
         title: "Products - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
     {
@@ -160,10 +161,9 @@ const router = createRouter({
       meta: {
         title: "Create Product - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
-
     {
       path: "/admin/products/:id",
       name: "admin-product-detail",
@@ -171,17 +171,18 @@ const router = createRouter({
       meta: {
         title: "Product Details - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
+
     {
       path: "/admin/products/edit/:id",
-      name: "admin-product-detail",
+      name: "admin-product-edit",
       component: () => import("@/views/admin/AdminProductEditView.vue"),
       meta: {
         title: "Product Edit - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
 
@@ -193,7 +194,7 @@ const router = createRouter({
       meta: {
         title: "Categories - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
     {
@@ -203,7 +204,7 @@ const router = createRouter({
       meta: {
         title: "Create Category - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
     {
@@ -213,7 +214,7 @@ const router = createRouter({
       meta: {
         title: "Edit Category - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
 
@@ -225,7 +226,7 @@ const router = createRouter({
       meta: {
         title: "Brands - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
     {
@@ -235,7 +236,7 @@ const router = createRouter({
       meta: {
         title: "Create Brand - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
     {
@@ -245,7 +246,7 @@ const router = createRouter({
       meta: {
         title: "Edit Brand - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
 
@@ -257,7 +258,7 @@ const router = createRouter({
       meta: {
         title: "Users - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
     {
@@ -267,7 +268,7 @@ const router = createRouter({
       meta: {
         title: "Edit User - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
 
@@ -294,16 +295,16 @@ const router = createRouter({
     },
 
     // Admin Profile & Settings
-    {
+    /*     {
       path: "/admin/profile",
       name: "admin-profile",
       component: () => import("@/views/admin/AdminProfileView.vue"),
       meta: {
         title: "Profile - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
-    },
+    }, */
     {
       path: "/admin/settings",
       name: "admin-settings",
@@ -311,7 +312,7 @@ const router = createRouter({
       meta: {
         title: "Settings - Admin Panel",
         requiresAuth: true,
-        role: "admin",
+        role: "admin,editor",
       },
     },
 
@@ -326,8 +327,11 @@ const router = createRouter({
     },
 
     {
+      // Catch-all route for 404
       path: "/:pathMatch(.*)*",
-      redirect: "/forbidden",
+      name: "not-found",
+      component: () => import("@/views/NotFoundView.vue"),
+      meta: { title: "Page Not Found - Elegance Shop" },
     },
   ],
 });

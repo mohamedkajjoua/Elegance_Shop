@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import { useCartStore } from "@/stores/cart";
-import { useWishlistStore } from "@/stores/wishlist";
+import { useWishlistStore } from "@/stores/user/WishlistStore";
 
 const props = defineProps({
   product: {
@@ -26,8 +26,6 @@ const mainImage = computed(() => {
   return "/placeholder-image.jpg";
 });
 
-const isInWishlist = computed(() => wishlistStore.isInWishlist(props.product.id));
-
 const badgeData = computed(() => {
   if (props.product.discount > 0) {
     return { text: `-${props.product.discount}%`, class: "bg-[#FFE0E0] text-[#C62828]" }; // Sale
@@ -39,48 +37,46 @@ const badgeData = computed(() => {
   return null;
 });
 
-function toggleWishlist(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  wishlistStore.toggleWishlist(props.product);
+const isInWishlist = computed(() => {
+  return wishlistStore.isInWishlist(props.product.id || props.product.product_id);
+});
+
+function toggleWishlist() {
+  wishlistStore.toggleProduct(props.product);
 }
 
-// ✅ ADD TO CART (COMPATIBLE BACKEND الحالي)
 function addToCart(e) {
-  e.preventDefault()
-  e.stopPropagation()
+  e.preventDefault();
+  e.stopPropagation();
 
   //  sécurité
   if (!props.product.variants || props.product.variants.length === 0) {
-    console.error('Produit sans variants', props.product)
-    alert('Ce produit n’est pas disponible')
-    return
+    console.error("Produit sans variants", props.product);
+    alert("Ce produit n’est pas disponible");
+    return;
   }
 
-  const variantId = props.product.variants[0].id
+  const variantId = props.product.variants[0].id;
 
-  cartStore.addToCart(variantId, 1)
+  cartStore.addToCart(variantId, 1);
 
   // feedback UI
-  const btn = e.currentTarget
-  const oldHtml = btn.innerHTML
+  const btn = e.currentTarget;
+  const oldHtml = btn.innerHTML;
 
-  btn.disabled = true
-  btn.innerHTML = '<i class="fa-solid fa-check"></i>'
-  btn.classList.remove('bg-[#F0EBFF]', 'text-primary')
-  btn.classList.add('bg-green-500', 'text-white')
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+  btn.classList.remove("bg-[#F0EBFF]", "text-primary");
+  btn.classList.add("bg-green-500", "text-white");
 
   setTimeout(() => {
-    btn.innerHTML = oldHtml
-    btn.disabled = false
-    btn.classList.remove('bg-green-500', 'text-white')
-    btn.classList.add('bg-[#F0EBFF]', 'text-primary')
-  }, 1000)
+    btn.innerHTML = oldHtml;
+    btn.disabled = false;
+    btn.classList.remove("bg-green-500", "text-white");
+    btn.classList.add("bg-[#F0EBFF]", "text-primary");
+  }, 1000);
 }
 </script>
-
-
-
 
 <template>
   <div
@@ -109,7 +105,7 @@ function addToCart(e) {
       <button
         class="wishlist-btn absolute top-3 right-3 w-9 h-9 bg-white/90 border-none rounded-full flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100 hover:bg-white hover:scale-110 shadow-sm"
         :class="isInWishlist ? 'text-red-500' : 'text-gray-400 hover:text-red-500'"
-        @click="toggleWishlist"
+        @click.stop.prevent="toggleWishlist"
       >
         <i :class="isInWishlist ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
       </button>
@@ -141,20 +137,13 @@ function addToCart(e) {
           </div>
         </div>
 
-<button
-  class="add-cart-btn w-9 h-9 flex items-center justify-center
-         bg-[#F0EBFF] text-primary rounded-lg
-         hover:bg-primary hover:text-white transition-colors
-         disabled:opacity-40 disabled:cursor-not-allowed"
-
-  @click="addToCart"
->
-  <i class="fa-solid fa-cart-shopping"></i>
-</button>
-
-
+        <button
+          class="add-cart-btn w-9 h-9 flex items-center justify-center bg-[#F0EBFF] text-primary rounded-lg hover:bg-primary hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          @click="addToCart"
+        >
+          <i class="fa-solid fa-cart-shopping"></i>
+        </button>
       </div>
     </div>
   </div>
 </template>
-

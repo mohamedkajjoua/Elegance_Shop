@@ -84,5 +84,8 @@ export const useCartStore = defineStore("cart", {
         console.error("Erreur removeItem :", error.response?.data || error);
       }
     },
+    clearCart() {
+      this.items = [];
+    },
   },
 });

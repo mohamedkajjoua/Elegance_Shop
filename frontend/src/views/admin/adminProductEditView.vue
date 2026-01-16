@@ -148,7 +148,7 @@ const addVariantRow = () => {
     size: "",
     color: "",
     stock: 10,
-    price: form.price,
+    price: 0,
   });
 };
 
@@ -411,10 +411,10 @@ const submitForm = async () => {
                 <div
                   class="grid grid-cols-10 gap-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider px-1"
                 >
-                  <div class="col-span-3">Size</div>
-                  <div class="col-span-3">Color</div>
+                  <div class="col-span-2">Size</div>
+                  <div class="col-span-2">Color</div>
                   <div class="col-span-2">Stock</div>
-                  <div class="col-span-1">Price</div>
+                  <div class="col-span-2">Price</div>
                   <div class="col-span-1"></div>
                 </div>
 
@@ -424,7 +424,7 @@ const submitForm = async () => {
                     :key="index"
                     class="grid grid-cols-10 gap-2 items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
                   >
-                    <div class="col-span-3">
+                    <div class="col-span-2">
                       <select
                         v-model="variant.size"
                         class="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-orange-500 bg-white"
@@ -433,7 +433,7 @@ const submitForm = async () => {
                         <option v-for="s in availableSizes" :key="s" :value="s">{{ s }}</option>
                       </select>
                     </div>
-                    <div class="col-span-3">
+                    <div class="col-span-2">
                       <select
                         v-model="variant.color"
                         class="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-orange-500 bg-white"
@@ -441,6 +441,14 @@ const submitForm = async () => {
                         <option value="" disabled>Color</option>
                         <option v-for="c in availableColors" :key="c" :value="c">{{ c }}</option>
                       </select>
+                    </div>
+                    <div class="col-span-2">
+                      <input
+                        type="number"
+                        v-model="variant.price"
+                        class="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-orange-500"
+                        placeholder="Price"
+                      />
                     </div>
                     <div class="col-span-2">
                       <input

@@ -4,6 +4,7 @@ use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\CategoryController;
 use App\Http\Controllers\admin\ProductController;
 use App\Http\Controllers\admin\SettingController;
+use App\Http\Controllers\Api\AddressController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
@@ -12,8 +13,12 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\auth\AuthJWTController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\user\ProductSearchController;
+use App\Http\Controllers\user\WishlistController;
+
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Payment\StripePaymentController;
+use App\Http\Controllers\admin\AdminOrderController;
+use App\Http\Controllers\admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,11 +42,17 @@ Route::prefix('auth')->group(function () {
 
     Route::post('register', [AuthJWTController::class, 'register']);
     Route::post('login', [AuthJWTController::class, 'login']);
+    Route::get('users/{id}', [AuthJWTController::class, 'show']);
 
     Route::middleware('auth:api')->group(function () {
-        Route::post('logout', [AuthJWTController::class, 'logout']);
-        Route::post('refresh', [AuthJWTController::class, 'refresh']);
         Route::get('me', [AuthJWTController::class, 'me']);
+        Route::post('refresh', [AuthJWTController::class, 'refresh']);
+        Route::post('logout', [AuthJWTController::class, 'logout']);
+        Route::put('users/{id}', [AuthJWTController::class, 'update']);
+        Route::delete('users/{id}', [AuthJWTController::class, 'destroy']);
+
+        Route::get('users', [AuthJWTController::class, 'index'])
+            ->middleware('permission:view-users');
     });
 });
 
@@ -118,6 +129,28 @@ Route::prefix('brands')->group(function () {
         Route::delete('/{id}', [BrandController::class, 'destroy']);
     });
 });
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin Order Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'role:admin,editor'])
+    ->prefix('admin')
+    ->group(function () {
+
+        Route::get('/orders', [AdminOrderController::class, 'index']);
+        Route::get('/stats', [AdminOrderController::class, 'stats']);
+        Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
+        Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+       Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
+        Route::get('/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
+    });
+
+
 /*|--------------------------------------------------------------------------
 | Settings Routes
 |--------------------------------------------------------------------------*/
@@ -149,6 +182,20 @@ Route::prefix('home')->group(function () {
         //
     });
 });
+
+/*|--------------------------------------------------------------------------
+
+| Wishlist Routes
+
+|--------------------------------------------------------------------------*/
+
+Route::middleware('auth:api')->group(function () {
+
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+
+    Route::post('/wishlist/toggle', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
+});
 /*
 |--------------------------------------------------------------------------
 | orders Routes
@@ -159,27 +206,46 @@ Route::prefix('home')->group(function () {
 
 Route::middleware('auth:api')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
-    Route::get('/orders', [OrderController::class, 'index']);      // Order History
-    Route::get('/orders/{id}', [OrderController::class, 'show']);  // Order Details
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
 });
 
-Route::get('/order-pdf/{id}', function($id) {
+Route::get('/order-pdf/{id}', function ($id) {
     $order = App\Models\Order::with('orderItems.productVariant.product', 'user', 'shippingAddress')->findOrFail($id);
     $pdf = Barryvdh\DomPDF\Facade\Pdf::loadView('emails.invoice_pdf', compact('order'));
-    return $pdf->stream('order-'.$order->id.'.pdf');
+    return $pdf->stream('order-' . $order->id . '.pdf');
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| adresses Routes
+| addresses Routes
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth:api')->group(function () {
-    Route::get('/addresses', [AddressController::class, 'index']);
-    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::apiResource('addresses', AddressController::class);
 });
 
+/*
+|--------------------------------------------------------------------------
+| payment Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:api')->group(function () {
+    Route::post('/payment/intent', [StripePaymentController::class, 'createPaymentIntent']);
+});
 
+Route::post('/webhook', [StripePaymentController::class, 'webhook']);
 
+/*
+|--------------------------------------------------------------------------
+| dashboardStats Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
+
+    Route::get('/admin/dashboardStats', [DashboardController::class, 'index']);
+});

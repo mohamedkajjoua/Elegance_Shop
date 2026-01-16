@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useCartStore } from "@/stores/cart";
-import { useWishlistStore } from "@/stores/wishlist";
+import { useWishlistStore } from "@/stores/user/WishlistStore";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
 import { useProductShopStore } from "@/stores/user/ProductShop";
@@ -94,7 +94,6 @@ const selectedVariant = computed(() => {
   );
 });
 
-
 //slider images product
 const thumbnails = computed(() => {
   if (product.value?.images && product.value.images.length > 0) {
@@ -117,6 +116,8 @@ const selectedColor = ref("");
 const selectedSize = ref("");
 const quantity = ref(1);
 const activeTab = ref("description");
+// ADDED: State for stock message
+const stockAlert = ref("");
 
 // --- Methods ---
 
@@ -126,10 +127,33 @@ function changeImage(src: string) {
 
 function selectColor(color: string) {
   selectedColor.value = color;
+  // Reset size and alert when color changes
+  selectedSize.value = "";
+  stockAlert.value = "";
 }
 
+// MODIFIED: Function to check stock when selecting size
 function selectSize(size: string) {
-  selectedSize.value = size;
+  stockAlert.value = ""; // Reset alert
+
+  if (!selectedColor.value) {
+    alert("Please select a color first");
+    return;
+  }
+
+  // Find the variant for this color + size
+  const variant = product.value.variants?.find(
+    (v: any) => v.color === selectedColor.value && v.size === size
+  );
+
+  // Check if variant exists and has stock (assuming property is 'stock')
+  if (variant && variant.stock > 0) {
+    selectedSize.value = size;
+  } else {
+    // Show the message requested
+    stockAlert.value = "This is not in stock comming soon";
+    selectedSize.value = ""; // Prevent selection
+  }
 }
 
 function updateQty(change: number) {
@@ -143,19 +167,19 @@ const addToCart = () => {
   }
 
   //  Appel correct au store avec l'ID du variant et la quantité
-  cartStore.addToCart(selectedVariant.value.id, quantity.value)
+  cartStore
+    .addToCart(selectedVariant.value.id, quantity.value)
     .then(() => {
-       alert("Product added to cart!");
+      alert("Product added to cart!");
     })
-    .catch((err) => {
+    .catch((err: any) => {
       console.error("Error adding to cart:", err);
       alert("Failed to add product to cart.");
     });
 };
 
-
 function toggleWishlist() {
-  if (product.value) wishlistStore.toggleWishlist(product.value);
+  if (product.value) wishlistStore.toggleProduct(product.value);
 }
 
 // Reviews Data & Logic
@@ -245,6 +269,39 @@ function submitReview() {
   currentSlide.value = 0;
   alert("Thank you for your review!");
 }
+
+const discountPercentage = computed(() => {
+  // Fix: changed 'currentVariantPrice' to 'selectedVariant' as per your earlier code
+  // assuming you want to use the computed property defined earlier
+  if (!selectedVariant.value || !selectedVariant.value.price || !product.value.final_price) {
+    return 0;
+  }
+  return Math.round(
+    (1 - Number(product.value.final_price) / Number(selectedVariant.value.price)) * 100
+  );
+});
+
+const currentPrice = computed(() => {
+  if (selectedVariant.value && selectedVariant.value.price) {
+    return Number(selectedVariant.value.price);
+  }
+
+  return Number(product.value?.final_price || 0);
+});
+
+const currentOriginalPrice = computed(() => {
+  return Number(product.value?.price || 0);
+});
+
+const currentDiscountPercent = computed(() => {
+  const price = currentPrice.value;
+  const original = currentOriginalPrice.value;
+
+  if (original > price && original > 0) {
+    return Math.round((1 - price / original) * 100);
+  }
+  return 0;
+});
 </script>
 
 <template>
@@ -302,18 +359,20 @@ function submitReview() {
           </p>
 
           <div class="flex items-center gap-4 mb-6">
-            <span class="text-2xl sm:text-3xl font-bold text-primary">${{ product.price }}</span>
+            <span class="text-2xl sm:text-3xl font-bold text-primary"> ${{ currentPrice }} </span>
+
             <span
-              v-if="product.originalPrice"
+              v-if="currentDiscountPercent > 0"
               class="text-lg sm:text-xl text-text-light line-through"
             >
-              ${{ product.originalPrice }}
+              ${{ currentOriginalPrice }}
             </span>
+
             <span
-              v-if="product.originalPrice"
+              v-if="currentDiscountPercent > 0"
               class="bg-danger text-white text-xs sm:text-sm px-2 py-1 rounded"
             >
-              {{ Math.round((1 - product.price / product.originalPrice) * 100) }}% OFF
+              {{ currentDiscountPercent }}% OFF
             </span>
           </div>
 
@@ -339,7 +398,7 @@ function submitReview() {
             <h3 class="text-sm font-semibold mb-3">
               Size: <span class="text-text-light">{{ selectedSize }}</span>
             </h3>
-            <div class="flex gap-3">
+            <div class="flex gap-3 flex-wrap">
               <button
                 v-for="size in availableSizes"
                 :key="size"
@@ -354,6 +413,9 @@ function submitReview() {
                 {{ size }}
               </button>
             </div>
+            <p v-if="stockAlert" class="mt-2 text-red-500 text-sm font-semibold">
+              {{ stockAlert }}
+            </p>
           </div>
 
           <div class="mb-8">
@@ -376,14 +438,20 @@ function submitReview() {
                   <i class="fa-solid fa-plus"></i>
                 </button>
               </div>
-              <span class="text-text-light text-sm">Only 12 items left</span>
+              <span
+                v-if="selectedVariant && selectedVariant.stock < 12 && selectedVariant.stock > 0"
+                class="text-text-light text-sm"
+              >
+                Only {{ selectedVariant.stock }} items left
+              </span>
             </div>
           </div>
 
           <div class="flex gap-4">
             <button
-              class="flex-1 bg-primary text-white py-4 px-8 rounded-xl font-bold text-lg hover:bg-primary-dark transition-colors"
+              class="flex-1 bg-primary text-white py-4 px-8 rounded-xl font-bold text-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               @click="addToCart"
+              :disabled="!!stockAlert || !selectedSize"
             >
               Add to Cart
             </button>

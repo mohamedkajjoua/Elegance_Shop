@@ -7,6 +7,7 @@ const emit = defineEmits(["checkout"]);
 function proceedToCheckout() {
   emit("checkout");
 }
+console.log("Cart items count:", cartStore.items.length);
 </script>
 
 <template>
@@ -34,10 +35,18 @@ function proceedToCheckout() {
     </div>
 
     <button
-      class="btn-checkout w-full mt-4 bg-black text-white py-2 rounded hover:bg-gray-800 transition"
+      type="button"
+      :disabled="cartStore.items.length === 0"
+      class="btn-checkout w-full mt-4 py-2 rounded transition flex items-center justify-center font-bold"
+      :class="[
+        cartStore.items.length > 0
+          ? 'bg-black text-white hover:bg-gray-800 cursor-pointer'
+          : 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300',
+      ]"
       @click="proceedToCheckout"
     >
-      Proceed to Checkout <i class="fa-solid fa-arrow-right ml-2"></i>
+      Proceed to Checkout
+      <i class="fa-solid fa-arrow-right ml-2"></i>
     </button>
   </div>
 </template>

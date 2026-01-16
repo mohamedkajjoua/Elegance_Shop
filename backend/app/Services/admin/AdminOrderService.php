@@ -1,0 +1,107 @@
+<?php
+namespace App\Services\admin;
+
+use App\Models\Order;
+
+
+class AdminOrderService
+{
+
+public function listOrders(string $period = 'this_month')
+{
+    $query = Order::with('user')
+        ->orderBy('created_at', 'desc');
+
+    if ($period === 'this_month') {
+        $query->whereMonth('created_at', now()->month)
+              ->whereYear('created_at', now()->year);
+    }
+
+    if ($period === 'last_month') {
+        $query->whereMonth('created_at', now()->subMonth()->month)
+              ->whereYear('created_at', now()->subMonth()->year);
+    }
+
+    return $query->paginate(10);
+}
+
+
+    // Order details
+    public function getOrderDetails(int $orderId)
+    {
+        return Order::with([
+            'user',
+            'orderItems.productVariant.product',
+            'shippingAddress'
+        ])->findOrFail($orderId);
+    }
+
+    //  Update order status
+    public function updateStatus(int $orderId, string $status)
+    {
+        $order = Order::findOrFail($orderId);
+        $order->status = $status;
+        $order->save();
+
+        return [
+            'message' => 'Order status updated successfully',
+            'order' => $order
+        ];
+    }
+
+// refund Order
+    public function refundOrder(Order $order): Order
+    {
+        if ($order->payment_status !== 'paid') {
+            throw new \Exception('Order is not paid');
+        }
+
+        if ($order->status !== 'cancelled') {
+            throw new \Exception('Order must be cancelled first');
+        }
+
+
+
+        $order->update([
+            'payment_status' => 'refunded'
+        ]);
+
+        return $order;
+    }
+// get Orders For Export
+
+public function getOrdersForExport(string $period = 'this_month')
+{
+    $query = Order::with('user')->orderBy('created_at', 'desc');
+
+    if ($period === 'this_month') {
+        $query->whereMonth('created_at', now()->month)
+              ->whereYear('created_at', now()->year);
+    }
+
+    if ($period === 'last_month') {
+        $query->whereMonth('created_at', now()->subMonth()->month)
+              ->whereYear('created_at', now()->subMonth()->year);
+    }
+
+    return $query->get();
+}
+
+
+     // Get order statistics
+    public function getOrderStats()
+    {
+        return [
+            'total' => Order::count(),
+            'refunded' => Order::where('payment_status', 'refunded')->count(),
+            'cancelled' => Order::where('status', 'cancelled')->count(),
+            'shipped' => Order::where('status', 'shipped')->count(),
+            'delivered' => Order::where('status', 'delivered')->count(),
+            'delivering' => Order::where('status', 'delivering')->count(),
+            'pending' => Order::where('status', 'pending')->count(),
+            'paid' => Order::where('payment_status', 'paid')->count(),
+            'processing' => Order::where('status', 'processing')->count(),
+        ];
+    }
+
+}

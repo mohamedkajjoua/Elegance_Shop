@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
+use  App\Models\Order;
 use App\Services\OrderService\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class OrderController extends Controller
     //  Create a new order
     public function store(StoreOrderRequest $request): JsonResponse
     {
+
         $order = $this->orderService->createOrder(
             $request->user(),
             $request->addresse_id,
@@ -63,5 +65,24 @@ class OrderController extends Controller
             'success' => true,
             'order' => $order
         ]);
+    }
+    // cancel order
+    public function cancel($id): JsonResponse
+    {
+        $order = Order::findOrFail($id);
+       try {
+        $this->orderService->cancelOrder($order);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancelled successfully',
+
+        ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 }

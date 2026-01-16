@@ -12,24 +12,25 @@ use App\Models\User;
 
 class Addresse extends Model
 {
-     use HasFactory;
-      use SoftDeletes;
-        protected $fillable = [
+    use HasFactory;
+    use SoftDeletes;
+    protected $fillable = [
         'user_id',
+        'label',
         'country',
         'city',
         'street',
-         'post_code',
-         'phone',
+        'post_code',
+        'phone',
 
     ];
 
-    public function user():BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function orders():hasMany
+    public function orders(): hasMany
     {
         return $this->hasMany(Order::class, 'address_id');
     }
