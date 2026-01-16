@@ -152,7 +152,6 @@ class OrderService
     }
 
     // cancel Order
-
 public function cancelOrder(Order $order): Order
     {
         if ($order->status === 'delivered') {

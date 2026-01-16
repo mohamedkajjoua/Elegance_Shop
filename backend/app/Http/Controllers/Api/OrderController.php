@@ -66,9 +66,7 @@ class OrderController extends Controller
             'order' => $order
         ]);
     }
-
-          //Cancel order
-
+    // cancel order
     public function cancel($id): JsonResponse
     {
         $order = Order::findOrFail($id);
@@ -78,7 +76,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order cancelled successfully',
-            
+
         ]);
         } catch (\Exception $e) {
             return response()->json([

@@ -72,7 +72,7 @@ const fetchOrders = async () => {
     loading.value = false;
   }
 };
-// Cancel order
+// cancel order
 const cancelOrder = async (orderId) => {
   const confirmed = window.confirm(
     'Are you sure you want to cancel this order?'
@@ -201,12 +201,12 @@ const filteredOrders = (status) => {
               >
                 <i class="fa-regular fa-credit-card"></i> Pay Now
               </button>
-             <button
+              <button
                     v-if="order.status !== 'delivered' && order.status !== 'cancelled'"
                     @click="cancelOrder(order.id)"
                     class="w-full sm:w-auto px-6 py-2 bg-red-600 text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                   >
-                    <!-- Icon -->
+                   
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
