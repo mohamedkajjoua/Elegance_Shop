@@ -147,7 +147,7 @@ Route::middleware(['auth:api', 'role:admin,editor'])
         Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
        Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
         Route::get('/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
-        });
+    });
 
 
 /*|--------------------------------------------------------------------------

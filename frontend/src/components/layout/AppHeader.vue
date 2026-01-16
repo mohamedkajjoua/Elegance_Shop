@@ -3,11 +3,13 @@ import { onMounted, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useCartStore } from "@/stores/cart";
 import { useAuthStore } from "@/stores/auth/auth";
+import { useWishlistStore } from "@/stores/user/WishlistStore";
 
 const router = useRouter();
 const route = useRoute();
 const cartStore = useCartStore();
 const userStore = useAuthStore();
+const wishlistStore = useWishlistStore();
 
 const searchQuery = ref("");
 let searchTimeout: any = null;
@@ -19,6 +21,7 @@ onMounted(async () => {
   if (userStore.token) {
     await userStore.loadCurrentUser();
     await cartStore.fetchCart();
+    await wishlistStore.fetchWishlist();
   }
 });
 
@@ -165,10 +168,17 @@ watch(searchQuery, (newVal) => {
       </button>
       <router-link
         to="/wishlist"
-        class="action-btn hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors"
+        class="relative action-btn hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 bg-primary/10 text-primary rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors"
       >
         <i class="fa-regular fa-heart"></i>
         <span class="hidden lg:inline">Wishlist</span>
+
+        <span
+          v-show="wishlistStore.count > 0"
+          class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center shadow-sm border border-white"
+        >
+          {{ wishlistStore.count }}
+        </span>
       </router-link>
 
       <router-link

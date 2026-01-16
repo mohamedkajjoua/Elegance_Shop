@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useCartStore } from "@/stores/cart";
-import { useWishlistStore } from "@/stores/wishlist";
+import { useWishlistStore } from "@/stores/user/WishlistStore";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
 import { useProductShopStore } from "@/stores/user/ProductShop";
@@ -179,7 +179,7 @@ const addToCart = () => {
 };
 
 function toggleWishlist() {
-  if (product.value) wishlistStore.toggleWishlist(product.value);
+  if (product.value) wishlistStore.toggleProduct(product.value);
 }
 
 // Reviews Data & Logic
