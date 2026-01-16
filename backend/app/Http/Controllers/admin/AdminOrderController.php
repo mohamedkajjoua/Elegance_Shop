@@ -50,26 +50,7 @@ class AdminOrderController extends Controller
     }
 
 
-      //Cancel order
 
-    public function cancel($orderId): JsonResponse
-    {
-        $order = Order::findOrFail($orderId);
-       try {
-        $this->orderService->cancelOrder($order);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order cancelled and stock reverted successfully',
-            'order' => $order
-        ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
 
      public function refund(int $orderId): JsonResponse
     {

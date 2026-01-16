@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router"; // 1. استيراد الراوتر
+import { useRouter } from "vue-router";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
 import { useOrderStore } from "@/stores/user/OrderStore";
+import api from '@/services/api'
 
-const router = useRouter(); // 2. تعريف الراوتر
+const router = useRouter();
 const orderStore = useOrderStore();
 const breadcrumbItems = [{ label: "My Orders" }];
 const activeTab = ref("all");
@@ -13,7 +14,6 @@ const loading = ref(false);
 
 const BASE_URL = "http://127.0.0.1:8000";
 
-// 3. تحديث الألوان لتشمل حالة pending
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-700 border border-yellow-200",
   processing: "bg-blue-100 text-blue-600",
@@ -72,7 +72,23 @@ const fetchOrders = async () => {
     loading.value = false;
   }
 };
+// Cancel order
+const cancelOrder = async (orderId) => {
+  const confirmed = window.confirm(
+    'Are you sure you want to cancel this order?'
+  )
 
+  if (!confirmed) return
+
+try {
+  const res = await api.post(`/orders/${orderId}/cancel`)
+  alert(res.data.message)
+   await fetchOrders()
+} catch (error) {
+  console.log( error?.response?.data?.message)
+}
+
+}
 onMounted(fetchOrders);
 
 const filteredOrders = (status) => {
@@ -185,6 +201,20 @@ const filteredOrders = (status) => {
               >
                 <i class="fa-regular fa-credit-card"></i> Pay Now
               </button>
+             <button
+                    v-if="order.status !== 'delivered' && order.status !== 'cancelled'"
+                    @click="cancelOrder(order.id)"
+                    class="w-full sm:w-auto px-6 py-2 bg-red-600 text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                  >
+                    <!-- Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+
+                    Cancel
+                  </button>
+
+
 
               <button
                 v-if="order.status === 'delivered'"

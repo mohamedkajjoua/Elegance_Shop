@@ -17,7 +17,6 @@ use App\Http\Controllers\user\WishlistController;
 
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Payment\StripePaymentController;
-use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\admin\AdminOrderController;
 
 /*
@@ -146,9 +145,7 @@ Route::middleware(['auth:api', 'role:admin,editor'])
         Route::get('/stats', [AdminOrderController::class, 'stats']);
         Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
-
-        Route::post('/orders/{id}/cancel', [AdminOrderController::class, 'cancel']);
-        Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
+       Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
         Route::get('/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
         });
 
@@ -210,6 +207,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
 });
 
 Route::get('/order-pdf/{id}', function ($id) {

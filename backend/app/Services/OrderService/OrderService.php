@@ -150,4 +150,23 @@ class OrderService
             }),
         ];
     }
+
+    // cancel Order
+
+public function cancelOrder(Order $order): Order
+    {
+        if ($order->status === 'delivered') {
+            throw new \Exception('Delivered orders cannot be cancelled');
+        }
+
+        $order->update([
+            'status' => 'cancelled'
+        ]);
+                // Revert stock in product_variants
+        foreach ($order->orderItems as $item) {
+            $item->productVariant->increment('stock', $item->quantity);
+        }
+
+        return $order;
+    }
 }
