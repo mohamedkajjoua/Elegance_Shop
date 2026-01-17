@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref,computed  } from "vue";
 import { useRouter } from "vue-router";
 import { useCartStore } from "@/stores/cart";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
@@ -19,19 +19,14 @@ onMounted(async () => {
   await addressStore.fetchAddresses();
 });
 
-// ✅ FIX 1: Define BASE_URL so the image function works
+//  FIX 1: Define BASE_URL so the image function works
 const BASE_URL = "http://127.0.0.1:8000";
 
 const breadcrumbItems = [{ label: "Checkout" }];
 
-const shippingMethod = ref("standard");
-const shippingOptions = [
-  { id: "standard", name: "Standard Shipping", price: 10, days: "5-7 business days" },
-  { id: "express", name: "Express Shipping", price: 25, days: "2-3 business days" },
-  { id: "overnight", name: "Overnight Shipping", price: 50, days: "1 business day" },
-];
 
-// ✅ FIX 2: Moved getImageUrl OUT of proceedToPayment so the template can use it
+
+//  FIX 2: Moved getImageUrl OUT of proceedToPayment so the template can use it
 const getImageUrl = (img) => {
   if (!img) return "/images/placeholder.jpg";
 
@@ -68,8 +63,7 @@ const handleCheckout = async () => {
 
   const payload = {
     addresse_id: selectedAddressId.value,
-    // تم تغيير القيمة من "pending" إلى "cod" لأن السيرفر يرفض "pending"
-    // جرب "cod" أو "stripe" حسب المسموح في الـ Validation في Laravel
+
     payment_method: "cod",
   };
 
@@ -84,13 +78,36 @@ const handleCheckout = async () => {
   } catch (err) {
     if (err.response && err.response.status === 422) {
       console.log("Validation Errors:", err.response.data.errors);
-      // إذا استمر الخطأ، جرب تغيير "cod" إلى "stripe" في الـ payload أعلاه
+
       alert("Error: " + err.response.data.errors.payment_method[0]);
     } else {
       console.error("Order failed:", err);
       alert("Failed to create order");
     }
   }
+};
+
+// calcule shipping
+const calculateShipping = () => {
+  if (!cartStore.items || cartStore.items.length === 0) return 0;
+
+  let totalShipping = 0;
+  cartStore.items.forEach(item => {
+    if (item.product_variant?.product?.shipping) {
+      totalShipping += parseFloat(item.product_variant.product.shipping) * item.quantity;
+    }
+  });
+  return totalShipping;
+};
+//total Amount
+const totalAmount = computed(() => {
+  const subtotal = parseFloat(cartStore.subtotal || 0);
+  const shipping = calculateShipping();
+  return subtotal + shipping;
+});
+
+const formatCurrency = (amount) => {
+  return parseFloat(amount).toFixed(2);
 };
 </script>
 
@@ -158,37 +175,8 @@ const handleCheckout = async () => {
             </div>
           </div>
         </div>
-
-        <div class="bg-white rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8">
-          <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6">Shipping Method</h2>
-          <div class="space-y-4">
-            <label
-              v-for="option in shippingOptions"
-              :key="option.id"
-              :class="[
-                'flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all',
-                shippingMethod === option.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-gray-300',
-              ]"
-            >
-              <div class="flex items-center gap-4">
-                <input
-                  v-model="shippingMethod"
-                  type="radio"
-                  :value="option.id"
-                  class="w-5 h-5 text-primary"
-                />
-                <div>
-                  <p class="font-semibold">{{ option.name }}</p>
-                  <p class="text-sm text-text-light">{{ option.days }}</p>
-                </div>
-              </div>
-              <span class="font-bold">${{ option.price.toFixed(2) }}</span>
-            </label>
-          </div>
-        </div>
       </div>
+
 
       <div class="lg:col-span-1">
         <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 sticky top-5">
@@ -197,7 +185,7 @@ const handleCheckout = async () => {
           <div class="space-y-4 mb-6">
             <div v-for="item in cartStore.items" :key="item.id" class="flex gap-4">
               <div class="flex-1">
-                <img
+               <img
                   :src="getImageUrl(item.product_variant?.product?.images?.[0])"
                   :alt="item.product_variant?.product?.name"
                   class="w-16 h-16 object-cover rounded-lg mb-2"
@@ -220,24 +208,14 @@ const handleCheckout = async () => {
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-text-light">Shipping</span>
-              <span
-                >${{ shippingOptions.find((o) => o.id === shippingMethod).price.toFixed(2) }}</span
+              <span>{{ formatCurrency(calculateShipping()) }}DH</span
+
               >
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-text-light">Tax</span>
-              <span>${{ cartStore.tax.toFixed(2) }}</span>
             </div>
             <div class="flex justify-between font-bold text-lg pt-3 border-t border-border">
               <span>Total</span>
-              <span
-                >${{
-                  (
-                    cartStore.subtotal +
-                    shippingOptions.find((o) => o.id === shippingMethod).price +
-                    cartStore.tax
-                  ).toFixed(2)
-                }}</span
+              <span>{{ formatCurrency(totalAmount) }}DH</span
+
               >
             </div>
           </div>
