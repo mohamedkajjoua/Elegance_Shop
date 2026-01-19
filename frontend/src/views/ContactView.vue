@@ -1,11 +1,14 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
 import { useSettingStore } from "@/stores/admin/adminSettingStore";
+import { useContactStore } from "@/stores/user/ContactStore";
 
 const breadcrumbItems = [{ label: "Contact Us" }];
 
-const contactForm = ref({
+const contactStore = useContactStore();
+
+const contactForm = reactive({
   name: "",
   email: "",
   subject: "",
@@ -14,19 +17,30 @@ const contactForm = ref({
 
 const isSubmitting = ref(false);
 
-function submitForm() {
-  if (!contactForm.value.name || !contactForm.value.email || !contactForm.value.message) {
+async function submitForm() {
+  if (!contactForm.name || !contactForm.email || !contactForm.message) {
     alert("Please fill in all required fields");
-    return;
+    return; // توقف هنا ولا تكمل الإرسال
   }
 
   isSubmitting.value = true;
 
-  setTimeout(() => {
-    alert("Thank you for your message! We will get back to you soon.");
-    contactForm.value = { name: "", email: "", subject: "", message: "" };
+  try {
+    const result = await contactStore.sendContactMessage(contactForm);
+
+    if (result.success) {
+      alert("Thank you for your message! We will get back to you soon.");
+
+      Object.assign(contactForm, { name: "", email: "", subject: "", message: "" });
+    } else {
+      alert("Server Error: " + contactStore.errorMessage);
+    }
+  } catch (error) {
+    console.error("Connection Error:", error);
+    alert("Could not connect to the server.");
+  } finally {
     isSubmitting.value = false;
-  }, 1500);
+  }
 }
 
 const settingStore = useSettingStore();

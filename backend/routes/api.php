@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Payment\StripePaymentController;
 use App\Http\Controllers\admin\AdminOrderController;
 use App\Http\Controllers\admin\DashboardController;
+use App\Http\Controllers\user\ContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -241,4 +242,15 @@ Route::post('/webhook', [StripePaymentController::class, 'webhook']);
 Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
 
     Route::get('/admin/dashboardStats', [DashboardController::class, 'index']);
+});
+
+/*
+|--------------------------------------------------------------------------
+|Contact Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('contact')->group(function () {
+
+    Route::post('/send', [ContactController::class, 'send']);
 });
