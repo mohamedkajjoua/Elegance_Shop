@@ -31,12 +31,18 @@ class OrderService
                 return $item->quantity * $item->productVariant->price;
             });
 
+            $shipping = $cart->cartItems->sum(function ($item) {
+            return ($item->productVariant->product->shipping ?? 0) * $item->quantity;
+            });
+
+           $totalPrice = $subtotal + $shipping;
+
 
             $order = Order::create([
                 'user_id' => $user->id,
                 'addresse_id' => $addressId,
                 'subtotal' => $subtotal,
-                'total_price' => $subtotal,
+                'total_price' =>$totalPrice,
                 'status' => 'pending',
                 'payment_method' => $paymentMethod,
                 'payment_status' => 'pending',
