@@ -3,38 +3,33 @@ import { ref, onMounted } from "vue";
 import AdminHeader from "@/components/admin/AdminHeader.vue";
 import AdminNav from "@/components/admin/AdminNav.vue";
 import { useAdminCategoryStore } from "@/stores/admin/AdminCategoryStore";
-import { useRouter, useRoute } from "vue-router"; // أضفنا useRoute
+import { useRouter, useRoute } from "vue-router";
 
 const sidebarOpen = ref(false);
 const router = useRouter();
-const route = useRoute(); // للوصول لـ ID من الرابط
+const route = useRoute();
 
 const categoryStore = useAdminCategoryStore();
 const form = ref({ name: "" });
 
-// جلب المعرف من الرابط (يفترض أن المسار هو /admin/category/edit/:id)
 const categoryId = route.params.id;
 
 onMounted(async () => {
-  // 1. جلب البيانات إذا كانت المصفوفة فارغة في الستور
   if (categoryStore.categories.length === 0) {
     await categoryStore.fetchCategory();
   }
 
-  // 2. البحث عن القسم المطلوب لملء النموذج
   const category = categoryStore.categories.find((c) => c.id == categoryId);
 
   if (category) {
     form.value.name = category.name;
   } else {
-    // إذا لم يجد القسم (مثلا ID خطأ)، ارجع للخلف
     router.push("/admin/category");
   }
 });
 
 const handleSubmit = async () => {
   try {
-    // 3. استدعاء دالة التحديث بدلاً من الإنشاء
     await categoryStore.updateCategory(form.value, categoryId);
     router.push("/admin/category");
   } catch (error) {
