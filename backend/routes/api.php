@@ -146,7 +146,7 @@ Route::middleware(['auth:api', 'role:admin,editor'])
         Route::get('/stats', [AdminOrderController::class, 'stats']);
         Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
-       Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
+        Route::post('/orders/{id}/refund', [AdminOrderController::class, 'refund']);
         Route::get('/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
     });
 
@@ -156,17 +156,10 @@ Route::middleware(['auth:api', 'role:admin,editor'])
 |--------------------------------------------------------------------------*/
 
 Route::prefix('settings')->group(function () {
-
     Route::get('/', [SettingController::class, 'index']);
-    Route::post('/', [SettingController::class, 'store']);
-    Route::get('/{id}', [SettingController::class, 'show']);
-    Route::put('/{id}', [SettingController::class, 'update']);
-    Route::delete('/{id}', [SettingController::class, 'destroy']);
-
-
-
     Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
-        //
+
+        Route::post('/', [SettingController::class, 'store']);
     });
 });
 /*
