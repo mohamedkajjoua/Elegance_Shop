@@ -1,5 +1,6 @@
 <script setup>
 import { useCartStore } from "@/stores/cart";
+import {computed} from "vue";
 
 const cartStore = useCartStore();
 const emit = defineEmits(["checkout"]);
@@ -8,6 +9,30 @@ function proceedToCheckout() {
   emit("checkout");
 }
 console.log("Cart items count:", cartStore.items.length);
+
+// calcule shipping
+const calculateShipping = () => {
+  if (!cartStore.items || cartStore.items.length === 0) return 0;
+
+  let totalShipping = 0;
+  cartStore.items.forEach(item => {
+    if (item.product_variant?.product?.shipping) {
+      totalShipping += parseFloat(item.product_variant.product.shipping) * item.quantity;
+    }
+  });
+  return totalShipping;
+};
+
+//total Amount
+const totalAmount = computed(() => {
+  const subtotal = parseFloat(cartStore.subtotal || 0);
+  const shipping = calculateShipping();
+  return subtotal + shipping;
+});
+
+const formatCurrency = (amount) => {
+  return parseFloat(amount).toFixed(2);
+};
 </script>
 
 <template>
@@ -21,17 +46,13 @@ console.log("Cart items count:", cartStore.items.length);
 
     <div class="summary-row flex justify-between mb-2">
       <span>Shipping</span>
-      <span>${{ cartStore.shipping.toFixed(2) }}</span>
+      <span>${{ formatCurrency(calculateShipping()) }}</span>
     </div>
 
-    <div class="summary-row flex justify-between mb-2">
-      <span>Tax (5%)</span>
-      <span>${{ cartStore.tax.toFixed(2) }}</span>
-    </div>
 
     <div class="summary-row total flex justify-between mt-4 pt-4 border-t font-bold text-lg">
       <span>Total</span>
-      <span>${{ cartStore.total.toFixed(2) }}</span>
+      <span>${{ formatCurrency(totalAmount) }}</span>
     </div>
 
     <button
