@@ -24,25 +24,23 @@ const paymentMethod = ref("card");
 const saveCard = ref(false);
 const cardHolderName = ref("");
 
-// متغيرات Stripe
 const stripe = ref(null);
 const elements = ref(null);
 
-// إعدادات التصميم (لتطابق تصميم Tailwind الخاص بك)
 const stripeAppearance = {
   theme: "stripe",
   variables: {
-    colorPrimary: "#4f46e5", // لون الـ Primary
+    colorPrimary: "#4f46e5",
     colorBackground: "#ffffff",
     colorText: "#1f2937",
     colorDanger: "#ef4444",
     fontFamily: "ui-sans-serif, system-ui, sans-serif",
     spacingUnit: "4px",
-    borderRadius: "12px", // Rounded-xl
+    borderRadius: "12px",
   },
   rules: {
     ".Input": {
-      border: "1px solid #e5e7eb", // Border-border
+      border: "1px solid #e5e7eb",
       paddingTop: "12px",
       paddingBottom: "12px",
       boxShadow: "none",
@@ -54,25 +52,19 @@ const stripeAppearance = {
   },
 };
 
-// تهيئة Stripe عند تحميل الصفحة
 onMounted(async () => {
   const orderId = localStorage.getItem("last_order_id");
 
   if (!orderId) {
-    // router.push('/shop'); // فعل هذا السطر إذا كنت تريد إجبار وجود طلب
-    // return;
     console.warn("No Order ID found for Stripe demo");
   }
 
-  // 1. تحميل مكتبة Stripe
   stripe.value = await loadStripe(STRIPE_KEY);
 
-  // 2. جلب Client Secret من الستور
   if (orderId) {
     await paymentStore.initializePayment(orderId);
 
     if (paymentStore.clientSecret) {
-      // 3. إنشاء العناصر
       elements.value = stripe.value.elements({
         clientSecret: paymentStore.clientSecret,
         appearance: stripeAppearance,
@@ -87,16 +79,12 @@ onMounted(async () => {
   }
 });
 
-// دالة تنفيذ الدفع
 const handlePayment = async () => {
   if (paymentMethod.value === "card") {
-    // استخدام دالة الستور للدفع
     await paymentStore.confirmPayment(stripe.value, elements.value, cardHolderName.value);
 
-    // إذا نجح الدفع (Stripe عادة يعيد توجيه الصفحة، لكن احتياطاً)
     if (paymentStore.paymentStatus === "success") {
       cartStore.clearCart();
-      // router.push('/success'); // الستور يقوم بهذا عادة
     }
   } else {
     alert("Please select Credit Card for this demo.");
@@ -279,6 +267,12 @@ const handlePayment = async () => {
       <div class="lg:col-span-1">
         <div class="bg-white rounded-2xl p-6 sticky top-5 shadow-sm border border-gray-100">
           <h3 class="font-bold text-lg mb-4">Order Summary</h3>
+          <div>
+            <pre>
+            {{ cartStore.items }}
+          </pre
+            >
+          </div>
 
           <div class="space-y-3 mb-4 max-h-48 overflow-y-auto">
             <div
@@ -312,10 +306,6 @@ const handlePayment = async () => {
             <div class="flex justify-between text-sm">
               <span class="text-text-light">Shipping</span>
               <span class="font-medium">${{ cartStore.shipping.toFixed(2) }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-text-light">Tax</span>
-              <span class="font-medium">${{ cartStore.tax.toFixed(2) }}</span>
             </div>
             <div class="flex justify-between text-lg font-bold pt-3 border-t border-border">
               <span>Total</span>

@@ -9,22 +9,32 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Order;
+
 class Review extends Model
 {
-      use HasFactory;
-      use SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
-    public function user():BelongsTo
+
+    protected $fillable = [
+        'user_id',
+        'product_id',
+        'order_id',
+        'rating',
+        'comment'
+    ];
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function product():BelongsTo
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function order():BelongsTo
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
