@@ -34,7 +34,7 @@ class Order extends Model
 
     public function shippingAddress(): BelongsTo
     {
-        return $this->belongsTo(Addresse::class, 'addresse_id'); // correspond à la colonne
+        return $this->belongsTo(Addresse::class, 'addresse_id');
     }
 
     public function orderItems(): HasMany
@@ -50,5 +50,11 @@ class Order extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+    public function products()
+    {
+
+        return $this->belongsToMany(Product::class, 'order_items')
+            ->withPivot('quantity', 'price');
     }
 }

@@ -20,6 +20,7 @@ use App\Http\Controllers\Payment\StripePaymentController;
 use App\Http\Controllers\admin\AdminOrderController;
 use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\user\ContactController;
+use App\Http\Controllers\user\ReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -253,4 +254,18 @@ Route::middleware(['auth:api', 'role:admin,editor'])->group(function () {
 Route::prefix('contact')->group(function () {
 
     Route::post('/send', [ContactController::class, 'send']);
+});
+
+/*
+|--------------------------------------------------------------------------
+|Reviews Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/products/{productId}/reviews', [ReviewController::class, 'index']);
+
+
+Route::middleware('auth:api')->group(function () {
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 });

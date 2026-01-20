@@ -3,10 +3,10 @@ import { ref, onMounted } from "vue";
 
 import { useAuthStore } from "@/stores/auth/auth";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
-import { useAddressStore } from "@/stores/user/AddressStore"; // تأكد من المسار الصحيح
+import { useAddressStore } from "@/stores/user/AddressStore";
 
 const userStore = useAuthStore();
-const addressStore = useAddressStore(); // استخدام ستور العناوين
+const addressStore = useAddressStore();
 
 const breadcrumbItems = [{ label: "My Profile" }];
 
@@ -132,7 +132,6 @@ function editAddress(address) {
 }
 
 async function saveAddress() {
-  // 1. التحقق من الحقول
   if (!addressForm.value.label || !addressForm.value.street || !addressForm.value.city) {
     alert("Please fill required fields (Label, Street, and City)");
     return;
@@ -144,8 +143,6 @@ async function saveAddress() {
     phone: addressForm.value.phone || userStore.user?.phone,
   };
 
-  // 2. نحفظ نوع العملية (هل هي تعديل؟) في متغير منفصل الآن
-  // لأننا سنفقد قيمة editingAddressId بعد قليل عند عمل reset
   const isUpdating = editingAddressId.value;
 
   try {
@@ -156,11 +153,10 @@ async function saveAddress() {
     }
 
     if (!addressStore.error) {
-      // 3. نستخدم المتغير المحفوظ لعرض الرسالة
       alert(isUpdating ? "Address Updated Successfully!" : "Address Created Successfully!");
 
       showAddressForm.value = false;
-      resetAddressForm(); // يتم المسح بعد عرض الرسالة
+      resetAddressForm();
     } else {
       alert(addressStore.error);
     }

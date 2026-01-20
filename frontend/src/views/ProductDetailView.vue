@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useCartStore } from "@/stores/cart";
 import { useWishlistStore } from "@/stores/user/WishlistStore";
@@ -7,6 +7,7 @@ import Breadcrumb from "@/components/layout/Breadcrumb.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
 import { useProductShopStore } from "@/stores/user/ProductShop";
 import { storeToRefs } from "pinia";
+import { useReviewStore } from "@/stores/user/reviewStore";
 
 const route = useRoute();
 const router = useRouter();
@@ -52,7 +53,7 @@ watch(
     if (newId) {
       loadPageData(newId as string);
     }
-  }
+  },
 );
 
 watch(product, (newVal) => {
@@ -82,7 +83,7 @@ const availableSizes = computed(() => {
 const isSizeAvailable = (size: string) => {
   if (!selectedColor.value || !product.value) return true;
   return product.value.variants?.some(
-    (v: any) => v.color === selectedColor.value && v.size === size
+    (v: any) => v.color === selectedColor.value && v.size === size,
   );
 };
 
@@ -90,7 +91,7 @@ const selectedVariant = computed(() => {
   if (!product.value || !selectedColor.value || !selectedSize.value) return null;
 
   return product.value.variants?.find(
-    (v: any) => v.color === selectedColor.value && v.size === selectedSize.value
+    (v: any) => v.color === selectedColor.value && v.size === selectedSize.value,
   );
 });
 
@@ -102,7 +103,7 @@ const thumbnails = computed(() => {
 });
 
 const isInWishlist = computed(() =>
-  product.value ? wishlistStore.isInWishlist(product.value.id) : false
+  product.value ? wishlistStore.isInWishlist(product.value.id) : false,
 );
 
 const breadcrumbItems = computed(() => [
@@ -143,7 +144,7 @@ function selectSize(size: string) {
 
   // Find the variant for this color + size
   const variant = product.value.variants?.find(
-    (v: any) => v.color === selectedColor.value && v.size === size
+    (v: any) => v.color === selectedColor.value && v.size === size,
   );
 
   // Check if variant exists and has stock (assuming property is 'stock')
@@ -152,7 +153,7 @@ function selectSize(size: string) {
   } else {
     // Show the message requested
     stockAlert.value = "This is not in stock comming soon";
-    selectedSize.value = ""; // Prevent selection
+    selectedSize.value = "";
   }
 }
 
@@ -183,101 +184,93 @@ function toggleWishlist() {
 }
 
 // Reviews Data & Logic
-const reviews = ref([
-  {
-    id: 1,
-    name: "Sarah M.",
-    avatar: "https://ui-avatars.com/api/?name=Sarah+M&background=5F2EEA&color=fff",
-    rating: 5,
-    date: "2024-12-15",
-    comment: "Amazing quality! The fabric is so soft and the fit is perfect. Highly recommend!",
-  },
-  {
-    id: 2,
-    name: "John D.",
-    avatar: "https://ui-avatars.com/api/?name=John+D&background=34C759&color=fff",
-    rating: 4,
-    date: "2024-12-10",
-    comment:
-      "Great sweatshirt, very comfortable. The color is slightly different from the picture but still nice.",
-  },
-  {
-    id: 3,
-    name: "Emily R.",
-    avatar: "https://ui-avatars.com/api/?name=Emily+R&background=FF9F43&color=fff",
-    rating: 5,
-    date: "2024-12-05",
-    comment: "Love it! Perfect for the winter season. Will definitely buy more colors.",
-  },
-]);
 
-const newReview = ref({
+const reviewStore = useReviewStore();
+const props = defineProps(["productId", "orderId"]);
+
+const from = reactive({
+  product_id: props.productId || route.params.id,
+  order_id: props.orderId,
   rating: 5,
   comment: "",
 });
 
-const reviewsCount = computed(() => reviews.value.length);
-const currentSlide = ref(0);
-const reviewsPerSlide = 2;
-const totalSlides = computed(() => Math.ceil(reviews.value.length / reviewsPerSlide));
-const visibleReviews = computed(() => {
-  const start = currentSlide.value * reviewsPerSlide;
-  return reviews.value.slice(start, start + reviewsPerSlide);
+const loadData = () => {
+  const id = props.productId || route.params.id;
+  if (id && id !== "undefined") {
+    reviewStore.fetchReviews(id);
+    from.product_id = id;
+  }
+};
+
+watch(
+  () => props.productId,
+  (newId) => {
+    if (newId) {
+      loadData();
+      from.product_id = newId;
+    }
+  },
+);
+
+watch(
+  () => props.orderId,
+  (newOrderId) => {
+    if (newOrderId) from.order_id = newOrderId;
+  },
+);
+
+onMounted(() => {
+  loadData();
 });
 
-function nextSlide() {
-  if (currentSlide.value < totalSlides.value - 1) {
-    currentSlide.value++;
-  } else {
-    currentSlide.value = 0;
+const handleSubmit = async () => {
+  from.product_id = props.productId || route.params.id;
+
+  if (!from.product_id) {
+    alert("number of product is not found");
+    return;
   }
-}
 
-function prevSlide() {
-  if (currentSlide.value > 0) {
-    currentSlide.value--;
-  } else {
-    currentSlide.value = totalSlides.value - 1;
-  }
-}
-
-function goToSlide(index: number) {
-  currentSlide.value = index;
-}
-
-function setRating(rating: number) {
-  newReview.value.rating = rating;
-}
-
-function submitReview() {
-  if (!newReview.value.comment.trim()) {
+  if (!from.comment.trim()) {
     alert("Please write a comment");
     return;
   }
 
-  const review = {
-    id: Date.now(),
-    name: "You",
-    avatar: "https://ui-avatars.com/api/?name=You&background=5F2EEA&color=fff",
-    rating: newReview.value.rating,
-    date: new Date().toISOString().split("T")[0],
-    comment: newReview.value.comment,
-  };
+  const result = await reviewStore.saveReviews(from);
 
-  reviews.value.unshift(review);
-  newReview.value = { rating: 5, comment: "" };
-  currentSlide.value = 0;
-  alert("Thank you for your review!");
-}
+  if (result?.success) {
+    alert("Thank you for your review!");
+
+    from.comment = "";
+    from.rating = 5;
+    currentSlide.value = 0;
+  }
+};
+
+const currentSlide = ref(0);
+const reviewsPerSlide = 2;
+
+const totalSlides = computed(() => Math.ceil(reviewStore.reviews.length / reviewsPerSlide));
+const reviewsCount = computed(() => reviewStore.reviews.length);
+
+const visibleReviews = computed(() => {
+  const start = currentSlide.value * reviewsPerSlide;
+  return reviewStore.reviews.slice(start, start + reviewsPerSlide);
+});
+
+const formatDate = (date: any) => {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString();
+};
+//end Reviews Data & Logic
 
 const discountPercentage = computed(() => {
-  // Fix: changed 'currentVariantPrice' to 'selectedVariant' as per your earlier code
-  // assuming you want to use the computed property defined earlier
   if (!selectedVariant.value || !selectedVariant.value.price || !product.value.final_price) {
     return 0;
   }
   return Math.round(
-    (1 - Number(product.value.final_price) / Number(selectedVariant.value.price)) * 100
+    (1 - Number(product.value.final_price) / Number(selectedVariant.value.price)) * 100,
   );
 });
 
@@ -545,10 +538,8 @@ const currentDiscountPercent = computed(() => {
                   v-for="star in 5"
                   :key="star"
                   class="text-2xl transition-colors"
-                  :class="
-                    star <= newReview.rating ? 'text-warning' : 'text-gray-300 hover:text-warning'
-                  "
-                  @click="setRating(star)"
+                  :class="star <= from.rating ? 'text-warning' : 'text-gray-300 hover:text-warning'"
+                  @click="from.rating = star"
                 >
                   <i class="fa-solid fa-star"></i>
                 </button>
@@ -557,7 +548,7 @@ const currentDiscountPercent = computed(() => {
             <div class="mb-4">
               <label class="block text-sm font-medium text-text-light mb-2">Your Comment</label>
               <textarea
-                v-model="newReview.comment"
+                v-model="from.comment"
                 placeholder="Share your experience with this product..."
                 rows="4"
                 class="w-full px-4 py-3 border border-border rounded-xl focus:border-primary outline-none text-sm resize-none"
@@ -565,30 +556,36 @@ const currentDiscountPercent = computed(() => {
             </div>
             <button
               class="bg-primary text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-primary-dark transition-colors"
-              @click="submitReview"
+              :disabled="reviewStore.isLoading"
+              @click="handleSubmit"
             >
-              <i class="fa-solid fa-paper-plane mr-2"></i>Submit Review
+              <i class="fa-solid fa-paper-plane mr-2"></i>
+              {{ reviewStore.isLoading ? "Submitting..." : "Submit Review" }}
             </button>
+            <p v-if="reviewStore.error" class="text-red-500 text-xs mt-2">
+              {{ reviewStore.error }}
+            </p>
           </div>
 
           <div class="reviews-slider">
             <div class="flex justify-between items-center mb-6">
-              <h3 class="font-bold text-lg">Customer Reviews ({{ reviewsCount }})</h3>
+              <h3 class="font-bold text-lg">Customer Reviews ({{ reviewStore.reviews.length }})</h3>
               <div class="slider-nav flex gap-2" v-if="totalSlides > 1">
                 <button
-                  class="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
+                  class="w-10 h-10 rounded-full border border-border flex items-center justify-center"
                   @click="prevSlide"
                 >
                   <i class="fa-solid fa-chevron-left"></i>
                 </button>
                 <button
-                  class="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
+                  class="w-10 h-10 rounded-full border border-border flex items-center justify-center"
                   @click="nextSlide"
                 >
                   <i class="fa-solid fa-chevron-right"></i>
                 </button>
               </div>
             </div>
+
             <div class="slider-container overflow-hidden">
               <div
                 class="slider-track grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300"
@@ -599,11 +596,19 @@ const currentDiscountPercent = computed(() => {
                   class="review-card bg-background rounded-xl p-5 border border-border"
                 >
                   <div class="flex items-start gap-4">
-                    <img :src="review.avatar" class="w-14 h-14 rounded-full shrink-0" alt="" />
+                    <img
+                      :src="
+                        `http://localhost:8000/storage/${review.user?.avatar}` ||
+                        `https://ui-avatars.com/api/?name=${review.user.first_name}`
+                      "
+                      class="w-14 h-14 rounded-full shrink-0"
+                    />
                     <div class="flex-1 min-w-0">
                       <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                        <span class="font-bold">{{ review.name }}</span>
-                        <span class="text-xs text-text-light">{{ review.date }}</span>
+                        <span class="font-bold">{{ review.user?.name }}</span>
+                        <span class="text-xs text-text-light">{{
+                          formatDate(review.created_at)
+                        }}</span>
                       </div>
                       <div class="text-warning text-sm mb-3">
                         <i
@@ -615,28 +620,11 @@ const currentDiscountPercent = computed(() => {
                           ]"
                         ></i>
                       </div>
-                      <p class="text-text-light text-sm leading-relaxed">
-                        {{ review.comment }}
-                      </p>
+                      <p class="text-text-light text-sm leading-relaxed">{{ review.comment }}</p>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="slider-dots flex justify-center gap-2 mt-6" v-if="totalSlides > 1">
-              <button
-                v-for="(dot, index) in totalSlides"
-                :key="index"
-                :class="[
-                  'w-3 h-3 rounded-full transition-all',
-                  currentSlide === index ? 'bg-primary w-8' : 'bg-gray-300 hover:bg-gray-400',
-                ]"
-                @click="goToSlide(index)"
-              ></button>
-            </div>
-            <div v-if="reviews.length === 0" class="text-center py-12 text-text-light">
-              <i class="fa-solid fa-comment-dots text-5xl mb-4 opacity-30"></i>
-              <p>No reviews yet. Be the first to review this product!</p>
             </div>
           </div>
         </div>
