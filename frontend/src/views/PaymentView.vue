@@ -78,6 +78,13 @@ onMounted(async () => {
     }
   }
 });
+const getImageUrl = (item) => {
+  const images = item.product_variant?.product?.images;
+  if (images && images.length > 0) {
+    return `http://127.0.0.1:8000/storage/${images[0].image_url}`;
+  }
+  return "/placeholder-image.jpg";
+};
 
 const handlePayment = async () => {
   if (paymentMethod.value === "card") {
@@ -267,33 +274,38 @@ const handlePayment = async () => {
       <div class="lg:col-span-1">
         <div class="bg-white rounded-2xl p-6 sticky top-5 shadow-sm border border-gray-100">
           <h3 class="font-bold text-lg mb-4">Order Summary</h3>
-          <div>
-            <pre>
-            {{ cartStore.items }}
-          </pre
-            >
-          </div>
+          <div></div>
 
           <div class="space-y-3 mb-4 max-h-48 overflow-y-auto">
             <div
               v-for="(item, index) in cartStore.items.slice(0, 3)"
-              :key="index"
+              :key="item.id"
               class="flex gap-3"
             >
               <img
-                :src="item.image"
-                class="w-14 h-14 rounded-lg object-cover"
-                :alt="item.name || item.title"
+                :src="getImageUrl(item)"
+                class="w-14 h-14 rounded-lg object-cover border border-gray-100"
+                :alt="item.product_variant?.product?.name"
               />
+
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium truncate">{{ item.name || item.title }}</p>
-                <p class="text-xs text-text-light">Qty: {{ item.quantity }}</p>
+                <p class="text-sm font-medium truncate text-gray-800">
+                  {{ item.product_variant?.product?.name }}
+                </p>
+
+                <p class="text-xs text-gray-500">
+                  {{ item.product_variant?.color }} / {{ item.product_variant?.size }}
+                </p>
+
+                <p class="text-xs text-text-light mt-1">Qty: {{ item.quantity }}</p>
               </div>
-              <span class="text-sm font-semibold"
-                >${{ (item.price * item.quantity).toFixed(2) }}</span
-              >
+
+              <span class="text-sm font-semibold text-primary">
+                ${{ (Number(item.product_variant?.price) * item.quantity).toFixed(2) }}
+              </span>
             </div>
-            <p v-if="cartStore.items.length > 3" class="text-xs text-text-light text-center">
+
+            <p v-if="cartStore.items.length > 3" class="text-xs text-text-light text-center mt-2">
               +{{ cartStore.items.length - 3 }} more items
             </p>
           </div>
