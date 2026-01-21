@@ -23,8 +23,13 @@ watch(
   (newPage) => {
     const page = newPage ? Number(newPage) : 1;
     productStore.fetchAllProduct({ page });
-  }
+  },
 );
+
+const formatRating = (rating) => {
+  if (!rating) return "0.0";
+  return Number(rating).toFixed(1);
+};
 
 // --- Helpers ---
 const formatSizes = (variants: any[]) => {
@@ -415,9 +420,10 @@ const handleDelete = async (id: number) => {
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
                       <span class="flex items-center gap-1 text-amber-500">
-                        <i class="fa-solid fa-star text-xs"></i> 4.5
+                        <i class="fa-solid fa-star text-xs"></i>
+                        {{ formatRating(product.reviews_avg_rating) }}
                       </span>
-                      <span class="text-slate-500 text-sm">55 Review</span>
+                      <span class="text-slate-500 text-sm">{{ product.reviews_count }} Review</span>
                     </div>
                   </td>
                   <td class="px-6 py-4">

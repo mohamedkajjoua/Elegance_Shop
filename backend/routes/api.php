@@ -263,9 +263,10 @@ Route::prefix('contact')->group(function () {
 */
 
 Route::get('/products/{productId}/reviews', [ReviewController::class, 'index']);
-
+Route::get('/AllReviews', [ReviewController::class, 'getAll']);
 
 Route::middleware('auth:api')->group(function () {
+
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 });

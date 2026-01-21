@@ -8,11 +8,14 @@ import ProductCard from "@/components/product/ProductCard.vue";
 import { useProductShopStore } from "@/stores/user/ProductShop";
 import { storeToRefs } from "pinia";
 import { useReviewStore } from "@/stores/user/reviewStore";
+import { useAuthStore } from "@/stores/auth/auth";
 
 const route = useRoute();
 const router = useRouter();
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
 
 // Store setup
 const productShopStore = useProductShopStore();
@@ -262,6 +265,10 @@ const visibleReviews = computed(() => {
 const formatDate = (date: any) => {
   if (!date) return "";
   return new Date(date).toLocaleDateString();
+};
+
+const removeReview = async (id: number) => {
+  await reviewStore.deleteReview(id);
 };
 //end Reviews Data & Logic
 
@@ -605,7 +612,9 @@ const currentDiscountPercent = computed(() => {
                     />
                     <div class="flex-1 min-w-0">
                       <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                        <span class="font-bold">{{ review.user?.name }}</span>
+                        <span class="font-bold"
+                          >{{ review.user?.first_name }} {{ review.user?.last_name }}</span
+                        >
                         <span class="text-xs text-text-light">{{
                           formatDate(review.created_at)
                         }}</span>
@@ -622,6 +631,13 @@ const currentDiscountPercent = computed(() => {
                       </div>
                       <p class="text-text-light text-sm leading-relaxed">{{ review.comment }}</p>
                     </div>
+                    <button
+                      v-if="user && user.id === review.user_id"
+                      class="cart-item-remove text-red-500 hover:text-red-700 transition"
+                      @click="removeReview(review.id)"
+                    >
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
                   </div>
                 </div>
               </div>

@@ -98,6 +98,9 @@ function resetFilters() {
   <aside
     class="sidebar w-full lg:w-[250px] shrink-0 lg:sticky lg:top-5 bg-card-bg lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none"
   >
+    <div class="sidebar-section mb-7">
+      <p class="filter-title font-bold text-sm">Filter by :</p>
+    </div>
     <div v-if="isLoading" class="animate-pulse space-y-8">
       <div>
         <div class="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
@@ -143,10 +146,6 @@ function resetFilters() {
             </a>
           </li>
         </ul>
-      </div>
-
-      <div class="sidebar-section mb-7">
-        <p class="filter-title font-bold text-sm">Filter by :</p>
       </div>
 
       <div class="sidebar-section mb-7">

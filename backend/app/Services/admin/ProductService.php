@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
+use App\Models\Review;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -59,9 +60,8 @@ class ProductService
                 $imagesToDelete = $product->images()->whereIn('id', $data['deleted_images'])->get();
 
                 foreach ($imagesToDelete as $image) {
-                    // 1. تنظيف المسار: إزالة الرابط الكامل وإزالة كلمة storage إذا وجدت
-                    // مثال: يحول "http://domain.com/storage/products/1.jpg" إلى "products/1.jpg"
-                    $relativePath = str_replace(url('/storage/'), '', $image->url); // لو الرابط كامل
+
+                    $relativePath = str_replace(url('/storage/'), '', $image->url);
                     $relativePath = str_replace('/storage/', '', $relativePath);
 
 
@@ -137,9 +137,7 @@ class ProductService
             'brand',
             'variants',
             'images',
-
-        ])->withCount('reviews')
-            ->withAvg('reviews', 'rating')
+        ])
             ->select([
                 'id',
                 'name',
@@ -158,6 +156,14 @@ class ProductService
                 'created_at',
                 'updated_at'
             ])
+            ->withCount('reviews')
+
+
+            ->addSelect([
+                'reviews_avg_rating' => Review::selectRaw('avg(rating::numeric)')
+                    ->whereColumn('product_id', 'products.id')
+            ])
+
             ->latest()
             ->paginate($perPage);
     }

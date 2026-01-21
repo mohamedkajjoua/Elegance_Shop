@@ -62,4 +62,13 @@ class ReviewController extends Controller
             ], 403);
         }
     }
+
+    public function getAll()
+    {
+        $reviews = $this->reviewService->getHomeReviews();
+        return response()->json([
+            'success' => true,
+            'data' => $reviews
+        ]);
+    }
 }

@@ -8,6 +8,12 @@ const ReviewService = {
   async upsertReviews(data: any) {
     return await api.post("/reviews", data);
   },
+  deleteReview(reviewId: any) {
+    return api.delete(`reviews/${reviewId}`);
+  },
+  getAll(data: any) {
+    return api.get(`/AllReviews`, data);
+  },
 };
 
 export default ReviewService;

@@ -42,7 +42,20 @@ class Product extends Model
         'price'       => 'decimal:2',
         'final_price' => 'decimal:2',
         'shipping'    => 'decimal:2',
+        'reviews_avg_rating' => 'float',
     ];
+
+    protected $appends = ['rating'];
+
+
+
+    public function getRatingAttribute()
+    {
+
+        return isset($this->attributes['reviews_avg_rating'])
+            ? round($this->attributes['reviews_avg_rating'], 1)
+            : 0;
+    }
 
     public function category(): BelongsTo
     {

@@ -9,6 +9,18 @@ use Exception;
 
 class ReviewService
 {
+
+    public function getHomeReviews()
+    {
+        return Review::with([
+            'user:id,first_name,last_name,avatar'
+
+        ])
+            ->where('rating', '>=', 4)
+            ->latest()
+            ->take(4)
+            ->get();
+    }
     public function getReviewsByProduct(int $productId)
     {
         return Review::with('user:id,last_name,first_name,avatar')

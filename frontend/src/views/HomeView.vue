@@ -5,12 +5,14 @@ import { getProductsList } from "@/data/products";
 import { useHomeStore } from "@/stores/user/HomeStore";
 import { useProductShopStore } from "@/stores/user/ProductShop";
 import { storeToRefs } from "pinia";
+import { useReviewStore } from "@/stores/user/reviewStore";
 
 const router = useRouter();
 //const featuredProducts = ref(getProductsList().slice(0, 8));
 const isLoaded = ref(false);
 
 const homeStore = useHomeStore();
+const reviewsStore = useReviewStore();
 
 const goToCategory = (id) => {
   router.push({ name: "shop", query: { category_id: id } });
@@ -21,6 +23,7 @@ onMounted(() => {
   homeStore.fetchHomeCategories();
   homeStore.fetchHomeFeatured();
   homeStore.getHomeBestSellers();
+  reviewsStore.AllReviews();
 
   setTimeout(() => {
     isLoaded.value = true;
@@ -523,7 +526,7 @@ function goToProduct(id) {
               {{ p.name }}
             </h3>
 
-            <div class="flex items-center gap-1.5 mb-2">
+            <!--   <div class="flex items-center gap-1.5 mb-2">
               <div class="flex text-amber-400 text-xs">
                 <i class="fa-solid fa-star"></i>
                 <i class="fa-solid fa-star"></i>
@@ -532,7 +535,7 @@ function goToProduct(id) {
                 <i class="fa-solid fa-star-half-alt"></i>
               </div>
               <span class="text-gray-400 text-xs">({{ p.rating || "4.5" }})</span>
-            </div>
+            </div> -->
 
             <div class="flex items-center gap-2">
               <span class="font-bold text-gray-900">${{ p.final_price }}</span>
@@ -563,22 +566,33 @@ function goToProduct(id) {
         <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mb-2">What Our Customers Say</h2>
         <p class="text-gray-500 text-base sm:text-lg">Real feedback from real fashion lovers</p>
       </div>
-
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
-          v-for="testimonial in testimonials"
-          :key="testimonial.id"
-          class="testimonial-card bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
+          v-for="reviews in reviewsStore.reviewHome"
+          :key="reviews.id"
+          class="reviews-card bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
         >
-          <div class="flex items-center gap-1 text-yellow-400 mb-4">
-            <i v-for="n in testimonial.rating" :key="n" class="fa-solid fa-star"></i>
+          <div class="flex text-yellow-400 mb-4 text-sm">
+            <i
+              v-for="n in 5"
+              :key="n"
+              :class="n <= reviews.rating ? 'fa-solid fa-star' : 'fa-regular fa-star'"
+            ></i>
           </div>
-          <p class="text-gray-600 mb-6 leading-relaxed">"{{ testimonial.text }}"</p>
+          <p class="text-gray-600 mb-6 leading-relaxed">{{ reviews.comment }}</p>
           <div class="flex items-center gap-3">
-            <img :src="testimonial.avatar" :alt="testimonial.name" class="w-12 h-12 rounded-full" />
+            <img
+              :src="
+                `http://localhost:8000/storage/${reviews.user?.avatar}` ||
+                `https://ui-avatars.com/api/?name=${reviews.user.first_name}`
+              "
+              class="w-12 h-12 rounded-full"
+            />
             <div>
-              <h4 class="font-bold text-gray-800">{{ testimonial.name }}</h4>
-              <p class="text-sm text-gray-500">{{ testimonial.role }}</p>
+              <h4 class="font-bold text-gray-800">
+                {{ reviews.user?.first_name }}&nbsp;{{ reviews.user?.last_name }}
+              </h4>
+              <p class="text-sm text-gray-500">{{ reviews.role }}</p>
             </div>
           </div>
         </div>
