@@ -8,7 +8,10 @@ class AdminProductService {
   }
   //
   async getById(id: number) {
-    return api.get<{ data: IProduct }>(`/products/${id}`);
+    const token = localStorage.getItem("token");
+
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get<{ data: IProduct }>(`/products/${id}`, config);
   }
   //create product
   async create(payload: IProductPayload) {

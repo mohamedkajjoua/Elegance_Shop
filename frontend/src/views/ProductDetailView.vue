@@ -531,7 +531,7 @@ const currentDiscountPercent = computed(() => {
 
         <div v-show="activeTab === 'description'" class="tab-content">
           <p class="text-text-light leading-relaxed">
-            {{ product.short_description || "No description available." }}
+            {{ product.description || "No description available." }}
           </p>
         </div>
 

@@ -42,10 +42,8 @@ function closeDropdown() {
 }
 
 const handleLogout = async () => {
-  if (confirm("Are you sure you want to logout?")) {
-    await userStore.logout();
-    router.push("/login");
-  }
+  await userStore.logout();
+  router.push("/login");
 };
 
 function clearSearch() {
@@ -79,7 +77,7 @@ watch(
   (newQ) => {
     searchQuery.value = (newQ as string) || "";
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(searchQuery, (newVal) => {
