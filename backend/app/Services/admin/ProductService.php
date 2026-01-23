@@ -9,6 +9,7 @@ use App\Models\Review;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class ProductService
 {
@@ -176,11 +177,27 @@ class ProductService
             'variants.images',
             'images',
             'reviews.user'
-        ])
-            ->find($id);
+        ])->find($id);
 
         if ($product) {
-            $product->increment('views_count');
+
+            $user = auth('sanctum')->user();
+
+            if ($user) {
+
+                $identifier = 'user_' . $user->id;
+            } else {
+
+                $identifier = 'ip_' . request()->ip();
+            }
+
+            $cacheKey = 'view_product_' . $id . '_' . $identifier;
+
+
+            if (!Cache::has($cacheKey)) {
+                $product->increment('views_count');
+                Cache::put($cacheKey, true, 60 * 60);
+            }
         }
 
         return $product;

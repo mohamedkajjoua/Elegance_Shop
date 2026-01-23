@@ -120,9 +120,7 @@ function addToCart(e) {
 
       <div class="product-footer flex justify-between items-end">
         <div class="product-price flex flex-col gap-1">
-          <span class="price-label text-[11px] text-gray-400 uppercase"
-            >Price :{{ product.brand_id }}</span
-          >
+          <span class="price-label text-[11px] text-gray-400 uppercase">Price </span>
           <div class="price-row flex items-center gap-2">
             <span class="current-price text-lg font-bold text-gray-900"
               >${{ product.final_price }}</span

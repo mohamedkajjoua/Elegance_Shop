@@ -160,7 +160,7 @@ onMounted(() => {
               </div>
               <div>
                 <h4 class="font-semibold text-text mb-1">Call Us</h4>
-                <p class="text-sm text-text-light">{{ settingStore.settings.call_us }}</p>
+                <p class="text-sm text-text-light">+212 {{ settingStore.settings.call_us }}</p>
               </div>
             </div>
           </div>

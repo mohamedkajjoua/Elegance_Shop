@@ -21,7 +21,6 @@ const shopStore = useProductShopStore();
 const isSubmitting = ref(false);
 const errors = ref<Record<string, string[]>>({});
 
-// واجهة النموذج المحدثة (تدعم الأسطر اليدوية للمتغيرات)
 interface IUiForm extends Omit<IProductPayload, "images"> {
   images: { file: File; preview: string; name: string }[];
   variants: { size: string; color: string; stock: number; price?: number }[];
@@ -31,7 +30,7 @@ interface IUiForm extends Omit<IProductPayload, "images"> {
 const form = reactive<IUiForm>({
   name: "",
   description: "",
-  short_description: "", // ✅ تمت إعادته
+  short_description: "",
   price: 0,
   discount: 0,
   shipping: 0,
@@ -40,7 +39,7 @@ const form = reactive<IUiForm>({
   is_featured: false,
   is_active: true,
   images: [],
-  // نبدأ بسطر واحد فارغ
+
   variants: [{ size: "", color: "", stock: 10 }],
 });
 
@@ -69,8 +68,6 @@ const calculatedFinalPrice = computed(() => {
   return finalPrice.toFixed(2);
 });
 
-// ========== VARIANT FUNCTIONS (الجديد: إضافة وحذف أسطر) ==========
-
 const addVariantRow = () => {
   form.variants.push({
     size: "",
@@ -83,7 +80,6 @@ const removeVariantRow = (index: number) => {
   form.variants.splice(index, 1);
 };
 
-// ========== IMAGE UPLOAD FUNCTIONS (تصميمك القديم) ==========
 const triggerFileInput = () => {
   if (fileInput.value) fileInput.value.click();
 };

@@ -28,7 +28,7 @@ class StoreProductRequest extends FormRequest
                 'string',
                 'min:3',
                 'max:255',
-                // ✅ التعديل هنا: التحقق من الفرادة مع تجاهل المحذوفين ناعماً
+
                 Rule::unique('products')->where(function ($query) {
                     return $query->whereNull('deleted_at');
                 })
