@@ -37,7 +37,7 @@ function addToCart(e, item) {
 
   if (!product.variants || product.variants.length === 0) {
     console.error("Produit sans variants", product);
-    alert("Ce produit n’est pas disponible");
+
     return;
   }
 

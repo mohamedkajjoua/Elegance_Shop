@@ -104,16 +104,16 @@ const processFiles = (files: FileList) => {
 
   for (let i = 0; i < files.length; i++) {
     if (form.images.length >= maxFiles) {
-      alert(`Maximum ${maxFiles} images allowed`);
+      console.log(`Maximum ${maxFiles} images allowed`);
       break;
     }
     const file = files[i];
     if (!allowedTypes.includes(file.type)) {
-      alert(`${file.name} is not a valid image type.`);
+      console.log(`${file.name} is not a valid image type.`);
       continue;
     }
     if (file.size > maxSize) {
-      alert(`${file.name} is too large.`);
+      console.log(`${file.name} is too large.`);
       continue;
     }
     const preview = URL.createObjectURL(file);
@@ -134,14 +134,14 @@ const submitForm = async () => {
   errors.value = {};
 
   if (!form.name || !form.price || !form.category_id) {
-    alert("Please fill in all required fields (Name, Price, Category)");
+    console.log("Please fill in all required fields (Name, Price, Category)");
     return;
   }
 
   // التحقق من المتغيرات
   const invalidVariants = form.variants.filter((v) => !v.size || !v.color);
   if (invalidVariants.length > 0) {
-    alert("Please select Size and Color for all variant rows.");
+    console.log("Please select Size and Color for all variant rows.");
     return;
   }
 
@@ -167,7 +167,7 @@ const submitForm = async () => {
 
     await adminStore.createProduct(payload);
 
-    alert("Product Created Successfully");
+    console.log("Product Created Successfully");
     resetForm();
     router.push("/admin/products");
   } catch (err: any) {
@@ -176,7 +176,7 @@ const submitForm = async () => {
       errors.value = err.response.data.errors;
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      alert("Failed to create product");
+      console.log("Failed to create product");
     }
   } finally {
     isSubmitting.value = false;

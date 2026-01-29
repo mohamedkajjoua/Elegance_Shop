@@ -19,7 +19,7 @@ const isSubmitting = ref(false);
 
 async function submitForm() {
   if (!contactForm.name || !contactForm.email || !contactForm.message) {
-    alert("Please fill in all required fields");
+    console.log("Please fill in all required fields");
     return; // توقف هنا ولا تكمل الإرسال
   }
 
@@ -29,15 +29,15 @@ async function submitForm() {
     const result = await contactStore.sendContactMessage(contactForm);
 
     if (result.success) {
-      alert("Thank you for your message! We will get back to you soon.");
+      console.log("Thank you for your message! We will get back to you soon.");
 
       Object.assign(contactForm, { name: "", email: "", subject: "", message: "" });
     } else {
-      alert("Server Error: " + contactStore.errorMessage);
+      console.log("Server Error: " + contactStore.errorMessage);
     }
   } catch (error) {
     console.error("Connection Error:", error);
-    alert("Could not connect to the server.");
+    console.log("Could not connect to the server.");
   } finally {
     isSubmitting.value = false;
   }

@@ -173,9 +173,9 @@ const addToCart = () => {
   //  Appel correct au store avec l'ID du variant et la quantité
   cartStore
     .addToCart(selectedVariant.value.id, quantity.value)
-    .then(() => {
+    /* .then(() => {
       alert("Product added to cart!");
-    })
+    }) */
     .catch((err: any) => {
       console.error("Error adding to cart:", err);
       alert("Failed to add product to cart.");
@@ -243,8 +243,6 @@ const handleSubmit = async () => {
   const result = await reviewStore.saveReviews(from);
 
   if (result?.success) {
-    alert("Thank you for your review!");
-
     from.comment = "";
     from.rating = 5;
     currentSlide.value = 0;

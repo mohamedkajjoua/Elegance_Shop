@@ -27,9 +27,8 @@ function handleUpdateQuantity(index, change) {
 // Supprimer un item
 function handleRemoveItem(index) {
   const item = cartStore.items[index];
-  if (confirm("Remove this item from cart?")) {
-    cartStore.removeItem(item.id);
-  }
+
+  cartStore.removeItem(item.id);
 }
 
 // Checkout

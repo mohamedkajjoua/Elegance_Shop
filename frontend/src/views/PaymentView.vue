@@ -94,7 +94,7 @@ const handlePayment = async () => {
       cartStore.clearCart();
     }
   } else {
-    alert("Please select Credit Card for this demo.");
+    console.log("Please select Credit Card for this demo.");
   }
 };
 </script>

@@ -21,7 +21,7 @@ class RegisterRequest extends FormRequest
             'email'      => ['required', 'string', 'email', 'max:150', 'unique:users,email'],
             'password'   => ['required', 'string', 'min:8', 'confirmed'],
             'role'       => ['nullable', 'string', Rule::in(['customer', 'admin', 'editor'])],
-            'phone'      => ['required', 'string', 'min:10', 'max:10'],
+            'phone'      => ['required', 'string', 'min:7', 'max:12'],
             'avatar'     => ['nullable', 'image', 'max:2048'],
         ];
     }

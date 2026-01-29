@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref,computed  } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useCartStore } from "@/stores/cart";
 import Breadcrumb from "@/components/layout/Breadcrumb.vue";
@@ -23,8 +23,6 @@ onMounted(async () => {
 const BASE_URL = "http://127.0.0.1:8000";
 
 const breadcrumbItems = [{ label: "Checkout" }];
-
-
 
 //  FIX 2: Moved getImageUrl OUT of proceedToPayment so the template can use it
 const getImageUrl = (img) => {
@@ -57,7 +55,7 @@ onMounted(async () => {
 
 const handleCheckout = async () => {
   if (!selectedAddressId.value) {
-    alert("Please select a shipping address first.");
+    console.log("Please select a shipping address first.");
     return;
   }
 
@@ -73,16 +71,16 @@ const handleCheckout = async () => {
     localStorage.setItem("address_id", selectedAddressId.value);
     localStorage.setItem("last_order_id", newOrder.id);
 
-    alert("Order created successfully!");
+    console.log("Order created successfully!");
     router.push("/payment");
   } catch (err) {
     if (err.response && err.response.status === 422) {
       console.log("Validation Errors:", err.response.data.errors);
 
-      alert("Error: " + err.response.data.errors.payment_method[0]);
+      console.log("Error: " + err.response.data.errors.payment_method[0]);
     } else {
       console.error("Order failed:", err);
-      alert("Failed to create order");
+      console.log("Failed to create order");
     }
   }
 };
@@ -92,7 +90,7 @@ const calculateShipping = () => {
   if (!cartStore.items || cartStore.items.length === 0) return 0;
 
   let totalShipping = 0;
-  cartStore.items.forEach(item => {
+  cartStore.items.forEach((item) => {
     if (item.product_variant?.product?.shipping) {
       totalShipping += parseFloat(item.product_variant.product.shipping) * item.quantity;
     }
@@ -177,7 +175,6 @@ const formatCurrency = (amount) => {
         </div>
       </div>
 
-
       <div class="lg:col-span-1">
         <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 sticky top-5">
           <h3 class="text-lg md:text-xl font-bold mb-4 md:mb-6">Order Summary</h3>
@@ -185,7 +182,7 @@ const formatCurrency = (amount) => {
           <div class="space-y-4 mb-6">
             <div v-for="item in cartStore.items" :key="item.id" class="flex gap-4">
               <div class="flex-1">
-               <img
+                <img
                   :src="getImageUrl(item.product_variant?.product?.images?.[0])"
                   :alt="item.product_variant?.product?.name"
                   class="w-16 h-16 object-cover rounded-lg mb-2"
@@ -208,15 +205,11 @@ const formatCurrency = (amount) => {
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-text-light">Shipping</span>
-              <span>{{ formatCurrency(calculateShipping()) }}DH</span
-
-              >
+              <span>{{ formatCurrency(calculateShipping()) }}DH</span>
             </div>
             <div class="flex justify-between font-bold text-lg pt-3 border-t border-border">
               <span>Total</span>
-              <span>{{ formatCurrency(totalAmount) }}DH</span
-
-              >
+              <span>{{ formatCurrency(totalAmount) }}DH</span>
             </div>
           </div>
 

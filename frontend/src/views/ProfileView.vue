@@ -49,7 +49,6 @@ async function toggleEdit() {
       const res = await userStore.updateUser(userStore.user.id, editForm.value);
 
       if (res && res.success) {
-        alert("Profile saved successfully!");
         isEditing.value = false;
 
         editForm.value = initForm();
@@ -153,8 +152,6 @@ async function saveAddress() {
     }
 
     if (!addressStore.error) {
-      alert(isUpdating ? "Address Updated Successfully!" : "Address Created Successfully!");
-
       showAddressForm.value = false;
       resetAddressForm();
     } else {

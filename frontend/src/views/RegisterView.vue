@@ -68,18 +68,31 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"> Phone</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fa-solid fa-mobile-screen text-gray-400"></i>
+            <div class="flex">
+              <select
+                v-model="selectedDialCode"
+                class="py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors bg-white flex-shrink-0"
+                style="min-width: 160px"
+                aria-label="Country dial code"
+              >
+                <option v-for="c in countriesList" :key="c.code" :value="c.dial_code">
+                  {{ c.name }} {{ c.dial_code }}
+                </option>
+              </select>
+
+              <div class="relative flex-1 ml-2">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fa-solid fa-mobile-screen text-gray-400"></i>
+                </div>
+                <input
+                  v-model="formData.phone"
+                  :class="{ 'border-red-500': validationErrors.phone }"
+                  type="text"
+                  class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
+                  placeholder="621000603"
+                  required
+                />
               </div>
-              <input
-                v-model="formData.phone"
-                :class="{ 'border-red-500': validationErrors.phone }"
-                type="text"
-                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
-                placeholder="+212-621-000-603"
-                required
-              />
             </div>
           </div>
 
@@ -109,14 +122,19 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-            <input
-              v-model="formData.password_confirmation"
-              :class="{ 'border-red-500': validationErrors.password_confirmation }"
-              :type="showPassword ? 'text' : 'password'"
-              class="block w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
-              placeholder="••••••••"
-              required
-            />
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fa-solid fa-lock text-gray-400"></i>
+              </div>
+              <input
+                v-model="formData.password_confirmation"
+                :class="{ 'border-red-500': validationErrors.password_confirmation }"
+                :type="showPassword ? 'text' : 'password'"
+                class="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary transition-colors"
+                placeholder="••••••••"
+                required
+              />
+            </div>
           </div>
 
           <div class="flex items-start sm:items-center">
@@ -164,12 +182,17 @@ import type { IRegisterRequest } from "../types/authTypes";
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth/auth";
+import countries from "@/data/countries";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const showPassword = ref(false);
 const agreeTerms = ref(false);
 const isLoading = false;
+
+// phone handling: separate dial code selector and local phone input
+const countriesList = countries;
+const selectedDialCode = ref<string>("+212"); // default to Morocco as requested
 
 const formData = reactive<IRegisterRequest>({
   first_name: "",
@@ -191,7 +214,30 @@ function togglePassword() {
 const handleRegister = async () => {
   validationErrors.value = {};
 
-  const res = await authStore.register(formData);
+  // If user already entered full phone with +, use it. Otherwise prepend selected dial code.
+  let phoneValue = formData.phone || "";
+  if (!phoneValue.startsWith("+")) {
+    // remove non-digits then prepend dial code (without the '+' to match backend length limits)
+    const digits = phoneValue.replace(/[^0-9]/g, "");
+    const dial = selectedDialCode.value.replace(/^\+/, "");
+    phoneValue = `${dial}${digits}`;
+
+    // client-side validation: backend expects min:7 max:12
+    const length = phoneValue.length;
+    if (length < 7 || length > 12) {
+      validationErrors.value = {
+        ...(validationErrors.value || {}),
+        phone: ["Phone must be between 7 and 12 digits"],
+      } as Record<string, string[]>;
+      return;
+    }
+  }
+  const payload: IRegisterRequest = {
+    ...formData,
+    phone: phoneValue,
+  };
+
+  const res = await authStore.register(payload);
 
   if (res.success) {
     router.push("/login");
