@@ -98,9 +98,7 @@ const changePage = (page: number) => {
 
 //delete product
 const handleDelete = async (id: number) => {
-  if (confirm("Are you sure?")) {
-    await productStore.deleteProduct(id);
-  }
+  await productStore.deleteProduct(id);
 };
 </script>
 

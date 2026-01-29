@@ -8,9 +8,7 @@ const sidebarOpen = ref(false);
 const categoryStore = useAdminCategoryStore();
 
 const handleDelete = async (id) => {
-  if (confirm("Are you sure you want to delete this category?")) {
-    await categoryStore.deleteCategory(id);
-  }
+  await categoryStore.deleteCategory(id);
 };
 
 onMounted(async () => {

@@ -224,7 +224,6 @@ const submitForm = async () => {
 
     await adminStore.updateProduct(productId.value, payload);
 
-    alert("Product Updated Successfully!");
     router.push("/admin/products");
   } catch (err: any) {
     console.error(err);
@@ -232,7 +231,7 @@ const submitForm = async () => {
       errors.value = err.response.data.errors;
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      alert("Failed to update product.");
+      console.log("kkk");
     }
   } finally {
     isSubmitting.value = false;

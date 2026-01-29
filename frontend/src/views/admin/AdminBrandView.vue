@@ -11,9 +11,7 @@ onMounted(async () => {
   await brandStore.fetchBrand();
 });
 const handleDelete = async (id) => {
-  if (confirm("Are you sure you want to delete this category?")) {
-    await brandStore.deleteBrand(id);
-  }
+  await brandStore.deleteBrand(id);
 };
 </script>
 
